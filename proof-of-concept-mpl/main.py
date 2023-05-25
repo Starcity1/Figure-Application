@@ -1,6 +1,7 @@
 # Module imports
 from tkinter import *
 from PIL import ImageTk,Image
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from math import sqrt
@@ -9,45 +10,90 @@ from math import sqrt
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.figure import Figure
 
+# Dictionary holds all event ids.
+EVENTS = {
+    "LEFT":  mpl.backend_bases.MouseButton.LEFT,
+    "RIGHT": mpl.backend_bases.MouseButton.RIGHT
+}
 
-def plot_graph():
-    data_example = np.random.normal(500, 40, 1000)
-    fig = Figure(figsize=(5, 4), dpi=100)
-    fig.add_subplot().hist(data_example, int(sqrt(data_example.size)))
-    # creating the Tkinter canvas containing the Matplotlib figure
-    canvas = FigureCanvasTkAgg(fig, master=display_window)
-    canvas.draw()
-    canvas.get_tk_widget().place(relx=0.5, rely=0.5, anchor=CENTER)
+class App():
+    def __init__(self, master):
+        master.grid()
+        master.geometry("1280x720")
+        root.title("Proof of concept. Interactive matplotlib")
+
+        # Frame 1 styling.
+        self.option_window = LabelFrame(master, bg='#323f4a', borderwidth=0, width=master.winfo_screenwidth() / 5,
+                                        height=master.winfo_screenheight())
+        self.option_window.grid(row=0, column=0)
+
+        self.option_text = Label(self.option_window, background='#323f4a', foreground='white', font=10, text="Options")
+        self.option_text.place(relx=0.5, rely=0, anchor=N)
+        # option_text.grid(row=0, column=0, pady=5, sticky='N')
+
+        self.display_window = LabelFrame(master, bg='#536878', borderwidth=0, width=master.winfo_screenwidth() * (4 / 5),
+                                         height=master.winfo_screenheight())
+        self.display_window.grid(row=0, column=1)
+
+        self.display_frame = Label(self.display_window, background='#536878', foreground='white', font=10, text="Display")
+        self.display_frame.place(relx=0.5, rely=0, anchor=N)
+
+        master.columnconfigure(1, weight=4)
+        master.columnconfigure(0, weight=1)
+        master.rowconfigure(0, weight=1)
+
+        self.plot_graph()
+
+    def plot_graph(self):
+        data_example = np.random.normal(500, 40, 1000)
+        self.fig = mpl.figure.Figure(figsize=(5, 4), dpi=100)
+
+        # Manula zoom in and zoom out
+        self.fig.canvas.mpl_connect('button_press_event', self.plot_zoom_in)
+        self.fig.canvas.mpl_connect('button_press_event', self.plot_zoom_out)
+
+        self.ax = self.fig.subplots()
+        self.ax.hist(data_example, int(sqrt(data_example.size)))
+        self.ax.grid()
+        # creating the Tkinter canvas containing the Matplotlib figure
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.display_window)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().place(relx=0.5, rely=0.5, relheight=0.5, relwidth=0.5, anchor=CENTER)
+
+    def plot_zoom_in(self, event):
+        if event.button == EVENTS["LEFT"]:
+            # print(f"plot_zoom_in detecting {EVENTS['LEFT']}.")
+            # print(f"Mouse position :: x: {event.xdata}; y: {event.ydata}")
+            x_min, x_max = self.ax.get_xlim()
+            y_min, y_max = self.ax.get_ylim()
+
+            x_dist = ((x_max - x_min) / 2)
+            y_dist = ((y_max - y_min) / 2)
+
+            print(x_min, x_max)
+
+            self.ax.set_xlim((event.xdata - x_dist) * .95, (event.xdata + x_dist) * .95)
+            self.ax.set_ylim((event.ydata - y_dist) * .95, (event.ydata + y_dist) * .95)
+
+            self.canvas.draw()
+
+    def plot_zoom_out(self, event):
+        if event.button == EVENTS["RIGHT"]:
+            x_min, x_max = self.ax.get_xlim()
+            y_min, y_max = self.ax.get_ylim()
+
+            x_dist = ((x_max - x_min) / 2)
+            y_dist = ((y_max - y_min) / 2)
+
+            print(x_min, x_max)
+
+            self.ax.set_xlim((event.xdata - x_dist) * 1.05, (event.xdata + x_dist) * 1.05)
+            self.ax.set_ylim((event.ydata - y_dist) * 1.05, (event.ydata + y_dist) * 1.05)
+
+            self.canvas.draw()
 
 
 root = Tk()
-root.title("Proof of concept. Interactive matplotlib")
-
-root.grid()
-root.geometry("1280x720")
-
-# Frame 1 styling.
-option_window = LabelFrame(root, bg='#323f4a', borderwidth=0, width=root.winfo_screenwidth()/5, height=root.winfo_screenheight())
-option_window.grid(row=0, column=0)
-
-option_text = Label(option_window, background='#323f4a', foreground='white', font=10, text="Options")
-option_text.place(relx=0.5, rely=0, anchor=N)
-# option_text.grid(row=0, column=0, pady=5, sticky='N')
-
-
-display_window = LabelFrame(root, bg='#536878', borderwidth=0, width=root.winfo_screenwidth()*(4/5), height=root.winfo_screenheight())
-display_window.grid(row=0, column=1)
-
-display_frame = Label(display_window, background='#536878', foreground='white', font=10, text="Display")
-display_frame.place(relx=0.5, rely=0, anchor=N)
-# display_frame.grid(row=0, column=1, pady=5, sticky='N')
-#Show graph.
-plot_graph()
-
-# Adding respective weights for resizing.
-root.columnconfigure(1, weight=4)
-root.columnconfigure(0, weight=1)
-root.rowconfigure(0, weight=1)
-
+app = App(root)
 root.mainloop()
 
