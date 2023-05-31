@@ -1,6 +1,6 @@
 # Module imports
 from tkinter import *
-from PIL import ImageTk,Image
+# from PIL import ImageTk,Image
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -49,18 +49,13 @@ class App():
         data_example = np.random.normal(500, 40, 1000)
         self.fig = mpl.figure.Figure(figsize=(5, 4), dpi=100)
 
-        # Manula zoom in and zoom out
         # self.fig.canvas.mpl_connect('button_press_event', self.plot_zoom_in)
         # self.fig.canvas.mpl_connect('button_press_event', self.plot_zoom_out)
+
+        # Manula zoom in and zoom out
         graph_window = Frame(self.display_window)
         graph_window.place(relx=0.5, rely=0.5, relwidth=0.9, relheight=0.9, anchor=CENTER)
 
-        data_example = np.random.normal(500, 40, 1000)
-        self.fig = Figure(figsize=(5, 4), dpi=100)
-
-        # Manual zoom in and zoom out
-        # self.fig.canvas.mpl_connect('button_press_event', self.plot_zoom_in)
-        # self.fig.canvas.mpl_connect('button_press_event', self.plot_zoom_out)
 
         self.ax = self.fig.subplots()
         self.ax.hist(data_example, int(sqrt(data_example.size)))
@@ -71,8 +66,8 @@ class App():
         self.canvas.draw()
         graph_display = self.canvas.get_tk_widget()
         graph_display.place(relx=0.5, rely=0.5, relwidth=1, relheight=1, anchor=CENTER)
-
-        # Attempting to create toolbar.
+        #
+        # # Attempting to create toolbar.
         toolbar = NavigationToolbar2Tk(self.canvas, window=graph_window)
         toolbar.update()
         toolbar.place(relx=0.5, rely=1, relwidth=1, anchor=S)
