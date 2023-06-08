@@ -1,10 +1,15 @@
 # Module imports
+import tkinter
+import tkinter.messagebox
 from tkinter import *
-# from PIL import ImageTk,Image
+from PIL import ImageTk,Image
+import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from math import sqrt
+from tkinter import filedialog
+
 
 # Matplotlib backend for canvas
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -41,6 +46,40 @@ class App():
         master.columnconfigure(1, weight=4)
         master.columnconfigure(0, weight=1)
         master.rowconfigure(0, weight=1)
+
+        button1 = tkinter.Button(root, text="Density Graph")
+        button1.place(x=7, y=50)
+
+        button2 = tkinter.Button(root, text="Histogram")
+        button2.place(x=7, y=80)
+
+        button3 = tkinter.Button(root, text="Scatter Plot")
+        button3.place(x=7, y=110)
+
+        button4 = tkinter.Button(root, text="Event Layer on Houston")
+        button4.place(x=7, y=140)
+
+        button5 = tkinter.Button(root, text="Density Graph and Histogram")
+        button5.place(x=7, y=170)
+
+        button6 = tkinter.Button(root, text="Density Graph and Scatter Plot")
+        button6.place(x=7, y=200)
+
+        button7 = tkinter.Button(root, text="Density Graph and Scatter Plot with Map")
+        button7.place(x=7, y=230)
+
+        button8 = tkinter.Button(root, text="All Plots")
+        button8.place(x=7, y=260)
+
+        #img = Image.open('uploadsign.png')
+        #img = img.resize((50, 50), Image.ANTIALIAS)
+        #photo = ImageTk.PhotoImage(img)
+
+
+        #photo = ImageTk.PhotoImage(Image.open("plus.gif"))
+        buttonUploadFile = tkinter.Button(root, height=1, width=3, bg='green',command=self.upload_file)
+        buttonUploadFile.place(x=1239, y=8)
+        self.chargepol = None
 
         self.plot_graph()
 
@@ -103,6 +142,11 @@ class App():
             self.ax.set_ylim((event.ydata - y_dist) * 1.05, (event.ydata + y_dist) * 1.05)
 
             self.canvas.draw()
+
+    def upload_file(self):
+        filename = filedialog.askopenfilename(initialdir='.',
+                                              filetypes=[('Chargepol files', '*.csv'), ('HLMA raw', '*.hdf5')])
+
 
 
 root = Tk()
