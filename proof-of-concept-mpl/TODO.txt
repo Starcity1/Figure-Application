@@ -1,0 +1,11 @@
+-- TODO:
+
+- Be able to select multiple data. (Kevin)
+- Be able to plot hist scatter hmap and XLMA format
+- Be able to save the progress of plots and be able to reupload them on another app instance.
+- Create a 'properties' button to modify the current plot.
+- Resize stuff
+- Add title of graph below its display
+- Decide how to organize projects (i.e. how to store pickle files, or any other file). (David)
+- Decide what type of data we can upload (chargepol, raw data).
+- Dark mode
