@@ -83,7 +83,7 @@ class App():
         self.graph_window.place(relx=0.5, rely=0.5, relwidth=0.9, relheight=0.9, anchor=CENTER)
 
         #photo = ImageTk.PhotoImage(Image.open("plus.gif"))
-        buttonUploadFile = tkinter.Button(root, height=1, width=3, bg='green',command=self.upload_file)
+        buttonUploadFile = tkinter.Button(root, height=1, width=3, bg='green', command=self.upload_file)
         buttonUploadFile.place(x=1239, y=8)
 
     def plot_graph(self, figure: ChargepolFigure.ChargepolFigure):
