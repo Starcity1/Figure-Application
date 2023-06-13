@@ -1,13 +1,18 @@
 # Module imports
 import tkinter
+import tkinter.messagebox
 from tkinter import *
 from PIL import ImageTk,Image
+import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from math import sqrt
 from tkinter import filedialog
+import tkinter.messagebox as messagebox
 
+# Other scripts in project
+from Plotter import ChargepolFigure
 
 # Matplotlib backend for canvas
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -45,74 +50,29 @@ class App():
         master.columnconfigure(0, weight=1)
         master.rowconfigure(0, weight=1)
 
-        # button1 = tkinter.Button(root, text="Density Graph")
-        # button1.place(x=7, y=50)
-        #
-        # button2 = tkinter.Button(root, text="Histogram")
-        # button2.place(x=7, y=80)
-        #
-        # button3 = tkinter.Button(root, text="Scatter Plot")
-        # button3.place(x=7, y=110)
-        #
-        # button4 = tkinter.Button(root, text="Event Layer on Houston")
-        # button4.place(x=7, y=140)
-        #
-        # button5 = tkinter.Button(root, text="Density Graph and Histogram")
-        # button5.place(x=7, y=170)
-        #
-        # button6 = tkinter.Button(root, text="Density Graph and Scatter Plot")
-        # button6.place(x=7, y=200)
-        #
-        # button7 = tkinter.Button(root, text="Density Graph and Scatter Plot with Map")
-        # button7.place(x=7, y=230)
-        #
-        # button8 = tkinter.Button(root, text="All Plots")
-        #
+
+        # Initializing window where graph will live.
+        self.graph_window = Frame(self.display_window, background='#536878')
+        self.graph_window.place(relx=0.5, rely=0.5, relwidth=0.9, relheight=0.9, anchor=CENTER)
 
         img = Image.open('densityplot.png')
         resized_image = img.resize((100, 100), Image.ANTIALIAS)
 
         self.click_btn = ImageTk.PhotoImage(resized_image)
 
-        #img_label = Label(image=self.click_btn)
+        # img_label = Label(image=self.click_btn)
 
         my_button = Button(root, image=self.click_btn, command=self.upload_file, justify=LEFT)
 
         my_button.place(x=7, y=50)
 
+        buttonUploadFile = tkinter.Button(root, height=1, width=3, bg='green', command=self.upload_file)
+        buttonUploadFile.place(x=1239, y=8)
 
-        #buttonUploadFile = tkinter.Button(root, height=1, width=3, bg='green',command=self.upload_file)
-        #buttonUploadFile.place(x=1239, y=8)
-
-        self.plot_graph()
-
-    def plot_graph(self):
-
-        data_example = np.random.normal(500, 40, 1000)
-        self.fig = mpl.figure.Figure(figsize=(5, 4), dpi=100)
-
-        # self.fig.canvas.mpl_connect('button_press_event', self.plot_zoom_in)
-        # self.fig.canvas.mpl_connect('button_press_event', self.plot_zoom_out)
-
+    def plot_graph(self, figure: ChargepolFigure.ChargepolFigure):
         # Manula zoom in and zoom out
-        graph_window = Frame(self.display_window)
-        graph_window.place(relx=0.5, rely=0.5, relwidth=0.9, relheight=0.9, anchor=CENTER)
-
-
-        self.ax = self.fig.subplots()
-        self.ax.hist(data_example, int(sqrt(data_example.size)))
-        self.ax.grid()
-        # creating the Tkinter canvas containing the Matplotlib figure
-
-        self.canvas = FigureCanvasTkAgg(self.fig, master=graph_window)
-        self.canvas.draw()
-        graph_display = self.canvas.get_tk_widget()
-        graph_display.place(relx=0.5, rely=0.5, relwidth=1, relheight=1, anchor=CENTER)
-        #
-        # # Attempting to create toolbar.
-        toolbar = NavigationToolbar2Tk(self.canvas, window=graph_window)
-        toolbar.update()
-        toolbar.place(relx=0.5, rely=1, relwidth=1, anchor=S)
+        figure.plot_data()
+        graph = figure.createWidget()
 
     def plot_zoom_in(self, event):
         if event.button == EVENTS["LEFT"]:
@@ -147,12 +107,25 @@ class App():
             self.canvas.draw()
 
     def upload_file(self):
-        filename = filedialog.askopenfilename()
-        print('Selected: ', filename)
+        filename = filedialog.askopenfilename(initialdir='.',
+                                              filetypes=[('Chargepol files', '*.csv'), ('HLMA raw', '*.hdf5')])
+        new_chargepol_figure = ChargepolFigure.ChargepolFigure(filename, self.graph_window,
+                                                               ChargepolFigure.FigureType.DENSITY)
+        if new_chargepol_figure.chargepol_data is None:
+            return
+        self.plot_graph(new_chargepol_figure)
 
 
 
 root = Tk()
+
+def on_closing():
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        root.destroy()
+        quit()
+
 app = App(root)
+
+root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop()
 
