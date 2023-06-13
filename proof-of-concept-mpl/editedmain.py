@@ -9,7 +9,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from math import sqrt
 from tkinter import filedialog
+import tkinter.messagebox as messagebox
 
+# Other scripts in project
+from Plotter import ChargepolFigure
 
 # Matplotlib backend for canvas
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -75,41 +78,18 @@ class App():
         #img = img.resize((50, 50), Image.ANTIALIAS)
         #photo = ImageTk.PhotoImage(img)
 
+        # Initializing window where graph will live.
+        self.graph_window = Frame(self.display_window, background='#536878')
+        self.graph_window.place(relx=0.5, rely=0.5, relwidth=0.9, relheight=0.9, anchor=CENTER)
 
         #photo = ImageTk.PhotoImage(Image.open("plus.gif"))
         buttonUploadFile = tkinter.Button(root, height=1, width=3, bg='green',command=self.upload_file)
         buttonUploadFile.place(x=1239, y=8)
-        self.chargepol = None
 
-        self.plot_graph()
-
-    def plot_graph(self):
-
-        data_example = np.random.normal(500, 40, 1000)
-        self.fig = mpl.figure.Figure(figsize=(5, 4), dpi=100)
-
-        # self.fig.canvas.mpl_connect('button_press_event', self.plot_zoom_in)
-        # self.fig.canvas.mpl_connect('button_press_event', self.plot_zoom_out)
-
+    def plot_graph(self, figure: ChargepolFigure.ChargepolFigure):
         # Manula zoom in and zoom out
-        graph_window = Frame(self.display_window)
-        graph_window.place(relx=0.5, rely=0.5, relwidth=0.9, relheight=0.9, anchor=CENTER)
-
-
-        self.ax = self.fig.subplots()
-        self.ax.hist(data_example, int(sqrt(data_example.size)))
-        self.ax.grid()
-        # creating the Tkinter canvas containing the Matplotlib figure
-
-        self.canvas = FigureCanvasTkAgg(self.fig, master=graph_window)
-        self.canvas.draw()
-        graph_display = self.canvas.get_tk_widget()
-        graph_display.place(relx=0.5, rely=0.5, relwidth=1, relheight=1, anchor=CENTER)
-        #
-        # # Attempting to create toolbar.
-        toolbar = NavigationToolbar2Tk(self.canvas, window=graph_window)
-        toolbar.update()
-        toolbar.place(relx=0.5, rely=1, relwidth=1, anchor=S)
+        figure.plot_data()
+        graph = figure.createWidget()
 
     def plot_zoom_in(self, event):
         if event.button == EVENTS["LEFT"]:
@@ -146,10 +126,23 @@ class App():
     def upload_file(self):
         filename = filedialog.askopenfilename(initialdir='.',
                                               filetypes=[('Chargepol files', '*.csv'), ('HLMA raw', '*.hdf5')])
+        new_chargepol_figure = ChargepolFigure.ChargepolFigure(filename, self.graph_window,
+                                                               ChargepolFigure.FigureType.DENSITY)
+        if new_chargepol_figure.chargepol_data is None:
+            return
+        self.plot_graph(new_chargepol_figure)
 
 
 
 root = Tk()
+
+def on_closing():
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        root.destroy()
+        quit()
+
 app = App(root)
+
+root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop()
 
