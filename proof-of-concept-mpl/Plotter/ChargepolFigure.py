@@ -34,7 +34,7 @@ class ChargepolFigure:
     def __init__(self, filepath, master: Frame, type_fig: FigureType):
         self.filep = filepath
         self.chargepol_data = self.process_chargepol()
-
+        #print(self.chargepol_data["Timestamp"])
         if self.chargepol_data is None:
             return
 
@@ -92,11 +92,17 @@ class ChargepolFigure:
             "Location" : [chargepol_data['lon'].tolist(), chargepol_data['lat'].tolist()]# Longitude and latitude.
         }
 
+        self.dateList = list()
+        for i, n in enumerate(self.filep):
+            print(self.filep[i])
+            self.dateList.append(self.filep[i][-8:-6] + "/" + self.filep[i][-6:-4])
+
+        print(self.dateList)
         return res
 
     def verify_file(self) -> pd.DataFrame:
         """
-        Verifies the whether the given csv file (as of now) is a valid chargepol file. It does this by checking
+        Verifies whether the given csv file (as of now) is a valid chargepol file. It does this by checking
         if the csv files has the correct number of columns (8) and the labels for each value are correct.
         :param:
         :return: A pandas dataframe containing all the chargepol data.
@@ -104,16 +110,22 @@ class ChargepolFigure:
         chargepol_labels = ['charge', 'time', 'zmin', 'zwidth', 'x', 'y', 'lon', 'lat']
         # Two things we check for chargepol. It has the correct number of rows (8) and the values are correct.
         # Creating dataframe to determine validity.
-        if self.filep.endswith('.csv'):
-            df = pd.read_csv(self.filep, skiprows=[0, 1])  # We skip the main comments above.
-        else:
-            raise NotImplemented
+        dataframes = []
+        for i, n in enumerate(self.filep):
+            if self.filep[i].endswith('.csv'):
+                #print(self.filep[i])
+                df = pd.read_csv(self.filep[i], skiprows=[0, 1])  # We skip the main comments above.
+                df['time'] = df['time'] + (86400 * i)
+                dataframes.append(df)
+            else:
+                raise NotImplemented
+            merged_df = pd.concat(dataframes, ignore_index=True)
 
-        if df.shape[1] != 8 or sorted(chargepol_labels) != sorted(df.keys().array):
+        if merged_df.shape[1] != 8 or sorted(chargepol_labels) != sorted(merged_df.keys().array):
             messagebox.showerror("Invalid file", "Error: this csv file does not seem to be a valid Chargepol file.")
             return None
 
-        return df
+        return merged_df
 
     def createWidget(self) -> FigureCanvasTkAgg:
         """
@@ -171,21 +183,21 @@ class ChargepolFigure:
             ax1.set_yticks([])
 
             # TODO: Implement logic to detect and plot multiple days.
-            # if int(timePoints[-1]) - int(timePoints[0]) >= 172800:  # if our interval is greater or equal to 2 days
-            #     ticks = []
-            #     for i in range(int(timePoints[0]), int(timePoints[-1])):
-            #         if i % 86400 == 0:
-            #             ticks.append(i)
-            #     plt.xticks(ticks)
-            #     self.ax.figure.canvas.draw()
-            #     labels = [item.get_text() for item in self.ax.get_xticklabels()]
-            #     startingDateChargePol = int(self.initial_time / 86400)
-            #     endingDateChargePol = startingDateChargePol + len(ticks)
-            #     dateList = dateList[startingDateChargePol:endingDateChargePol]
-            #     print(dateList)
-            #     for i, n in enumerate(dateList):
-            #         labels[i] = str(dateList[i])
-            #     self.ax.set_xticklabels(labels)
+            if int(time_points[-1]) - int(time_points[0]) >= 172800:  # if our interval is greater or equal to 2 days
+                 ticks = []
+                 for i in range(int(time_points[0]), int(time_points[-1])):
+                     if i % 86400 == 0:
+                         ticks.append(i)
+                 plt.xticks(ticks)
+                 self.ax.figure.canvas.draw()
+                 labels = [item.get_text() for item in self.ax.get_xticklabels()]
+                 startingDateChargePol = int(self.initial_time / 86400)
+                 endingDateChargePol = startingDateChargePol + len(ticks)
+                 self.dateList = self.dateList[startingDateChargePol:endingDateChargePol]
+                 #print(self.dateList)
+                 for i, n in enumerate(self.dateList):
+                     labels[i] = self.dateList[i]
+                 self.ax.set_xticklabels(labels)
 
             self.ax.set(ylim=[0, 15])
             self.ax.set(xlabel=self.x_label, ylabel=self.y_label)

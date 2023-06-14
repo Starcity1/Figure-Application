@@ -10,6 +10,7 @@ import numpy as np
 from math import sqrt
 from tkinter import filedialog
 import tkinter.messagebox as messagebox
+from tkinter.filedialog import askdirectory
 
 # Other scripts in project
 from Plotter import ChargepolFigure
@@ -107,8 +108,11 @@ class App():
             self.canvas.draw()
 
     def upload_file(self):
-        filename = filedialog.askopenfilename(initialdir='.',
-                                              filetypes=[('Chargepol files', '*.csv'), ('HLMA raw', '*.hdf5')])
+        # path = askdirectory(initialdir=',')
+        # print(path)
+
+        filename = filedialog.askopenfilenames(initialdir='.',
+                                             filetypes=[('Chargepol files', '*.csv'), ('HLMA raw', '*.hdf5')])
         new_chargepol_figure = ChargepolFigure.ChargepolFigure(filename, self.graph_window,
                                                                ChargepolFigure.FigureType.DENSITY)
         if new_chargepol_figure.chargepol_data is None:
