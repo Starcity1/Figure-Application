@@ -56,7 +56,7 @@ class App():
         self.graph_window = Frame(self.display_window, background='#536878')
         self.graph_window.place(relx=0.5, rely=0.5, relwidth=0.9, relheight=0.9, anchor=CENTER)
 
-        img = Image.open('densityplot.png')
+        img = Image.open('Saved_files/densityplot.png')
         resized_image = img.resize((100, 100), Image.LANCZOS)
 
         self.click_btn = ImageTk.PhotoImage(resized_image)

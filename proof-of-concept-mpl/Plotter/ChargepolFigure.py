@@ -174,14 +174,14 @@ class ChargepolFigure:
                 raise Exception("No lightning activity at the time chosen")
 
             # Plotting density
-            # ax1 = self.ax.twinx()
-            # density = gaussian_kde(time_points)
-            # density.covariance_factor = lambda: .25
-            # density._compute_covariance()
-            # xs = np.linspace(time_points[0], time_points[-1], len(time_points))
-            # ax1.plot(xs, density(xs), color=[0, 0, 0], marker=',')
-            # # Hiding y-axis values
-            # ax1.set_yticks([])
+            ax1 = self.ax.twinx()
+            density = gaussian_kde(time_points)
+            density.covariance_factor = lambda: .25
+            density._compute_covariance()
+            xs = np.linspace(time_points[0], time_points[-1], len(time_points))
+            ax1.plot(xs, density(xs), color=[0, 0, 0], marker=',')
+            # Hiding y-axis values
+            ax1.set_yticks([])
 
             # TODO: Implement logic to detect and plot multiple days.
             if int(time_points[-1]) - int(time_points[0]) >= 172800:  # if our interval is greater or equal to 2 days
@@ -236,10 +236,10 @@ class ChargepolFigure:
         if not os.path.exists(pickle_path) or not os.path.isdir(pickle_path):
             os.mkdir(pickle_path)
 
-        cur_fig = plt.gcf()
+        # Original file ::
 
         pickle_file = open(pickle_path + "/" + pickle_filename + ".pickle", 'wb')
-        pickle.dump(cur_fig, pickle_file)
+        pickle.dump((self.fig, self.fig.get_axes()), pickle_file)
         pickle_file.close()
 
         plt.savefig(filepath)
