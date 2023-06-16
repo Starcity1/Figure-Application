@@ -9,6 +9,8 @@ import pandas as pd
 from scipy.stats import gaussian_kde
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.gridspec import GridSpec
+import pickle
+import os.path
 
 # TODO: Add the appropiate logic to determine a time interval and initial time.
 # TODO: Create dynamic plots.
@@ -65,7 +67,6 @@ class ChargepolFigure:
 
         # figure ax duo will contain all the information of the matplotlib plot itself.
         self.fig, self.ax = plt.subplots()
-        self.spec = GridSpec(nrows=4, ncols=4)
 
     def process_chargepol(self) -> dict:
         """
@@ -161,14 +162,14 @@ class ChargepolFigure:
                 raise Exception("No lightning activity at the time chosen")
 
             # Plotting density
-            ax1 = self.ax.twinx()
-            density = gaussian_kde(time_points)
-            density.covariance_factor = lambda: .25
-            density._compute_covariance()
-            xs = np.linspace(time_points[0], time_points[-1], len(time_points))
-            ax1.plot(xs, density(xs), color=[0, 0, 0], marker=',')
-            # Hiding y-axis values
-            ax1.set_yticks([])
+            # ax1 = self.ax.twinx()
+            # density = gaussian_kde(time_points)
+            # density.covariance_factor = lambda: .25
+            # density._compute_covariance()
+            # xs = np.linspace(time_points[0], time_points[-1], len(time_points))
+            # ax1.plot(xs, density(xs), color=[0, 0, 0], marker=',')
+            # # Hiding y-axis values
+            # ax1.set_yticks([])
 
             # TODO: Implement logic to detect and plot multiple days.
             # if int(timePoints[-1]) - int(timePoints[0]) >= 172800:  # if our interval is greater or equal to 2 days
@@ -189,7 +190,7 @@ class ChargepolFigure:
 
             self.ax.set(ylim=[0, 15])
             self.ax.set(xlabel=self.x_label, ylabel=self.y_label)
-            plt.suptitle(self.sup_title)
+            self.ax.set_title(self.sup_title)
             plt.grid()
         elif self.type == FigureType.HISTOGRAM:
             # TODO: Plot histogram
@@ -209,6 +210,27 @@ class ChargepolFigure:
         window = InfoWindow()
         return window.data
 
+    # See object serialization for this file.
+    def store_file(self, filepath: str):
+        # Creating pickle folder.
+        # Redrawing plot.
+        print(self.fig.get_axes())
+
+        parent_dir = filepath.split('/')[:-1]
+        parent_dir.append("pickled_files")
+        pickle_path = "/".join(parent_dir)
+        pickle_filename = filepath.split('/')[-1].split('.')[0]
+
+        if not os.path.exists(pickle_path) or not os.path.isdir(pickle_path):
+            os.mkdir(pickle_path)
+
+        cur_fig = plt.gcf()
+
+        pickle_file = open(pickle_path + "/" + pickle_filename + ".pickle", 'wb')
+        pickle.dump(cur_fig, pickle_file)
+        pickle_file.close()
+
+        plt.savefig(filepath)
 
 class InfoWindow:
     def __init__(self):
@@ -217,7 +239,7 @@ class InfoWindow:
         self.new.title("Information")
         self.new.resizable = False
 
-        self.data = tuple()
+        self.data = dict()
         self.done = IntVar()
 
         # Labels.

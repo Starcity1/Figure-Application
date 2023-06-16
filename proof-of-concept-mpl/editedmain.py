@@ -56,7 +56,7 @@ class App():
         self.graph_window.place(relx=0.5, rely=0.5, relwidth=0.9, relheight=0.9, anchor=CENTER)
 
         img = Image.open('densityplot.png')
-        resized_image = img.resize((100, 100), Image.ANTIALIAS)
+        resized_image = img.resize((100, 100), Image.LANCZOS)
 
         self.click_btn = ImageTk.PhotoImage(resized_image)
 
@@ -72,7 +72,29 @@ class App():
     def plot_graph(self, figure: ChargepolFigure.ChargepolFigure):
         # Manula zoom in and zoom out
         figure.plot_data()
-        graph = figure.createWidget()
+        self.graph = figure.createWidget()
+
+        def do_popup(event):
+            try:
+                menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                menu.grab_release()
+                selected.set(1)
+
+        def save_file():
+            f = filedialog.asksaveasfile(initialfile="Untitled.png", defaultextension=".png",
+                                         filetypes=[("Image Documents", "*.png")])
+            figure.store_file(f.name)
+
+        selected = IntVar()
+        menu = Menu(self.graph.get_tk_widget(), tearoff=0)
+        menu.add_command(label="Properties")
+        menu.add_separator()
+        menu.add_command(label="Save")
+        menu.add_command(label="Save as...", command=save_file)
+
+        self.graph.get_tk_widget().bind('<Button-3>', do_popup)
+        menu.wait_variable(selected)
 
     def plot_zoom_in(self, event):
         if event.button == EVENTS["LEFT"]:
