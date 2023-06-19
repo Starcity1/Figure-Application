@@ -56,16 +56,16 @@ class App():
         self.graph_window = Frame(self.display_window, background='#536878')
         self.graph_window.place(relx=0.5, rely=0.5, relwidth=0.9, relheight=0.9, anchor=CENTER)
 
-        img = Image.open('densityplot.png')
-        resized_image = img.resize((100, 100), Image.ANTIALIAS)
+        img = Image.open('Saved_files/densityplot.png')
+        resized_image = img.resize((100, 100), Image.LANCZOS)
 
         self.click_btn = ImageTk.PhotoImage(resized_image)
 
         # img_label = Label(image=self.click_btn)
 
-        my_button = Button(root, image=self.click_btn, command=self.upload_file, justify=LEFT)
+        self.my_button = Button(root, image=self.click_btn, command=self.update_image, justify=LEFT)
 
-        my_button.place(x=7, y=50)
+        self.my_button.place(x=7, y=50)
 
         buttonUploadFile = tkinter.Button(root, height=1, width=3, bg='green', command=self.upload_file)
         buttonUploadFile.place(x=1239, y=8)
@@ -73,7 +73,30 @@ class App():
     def plot_graph(self, figure: ChargepolFigure.ChargepolFigure):
         # Manula zoom in and zoom out
         figure.plot_data()
-        graph = figure.createWidget()
+        self.graph = figure.createWidget()
+
+        def do_popup(event):
+            try:
+                menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                menu.grab_release()
+                selected.set(1)
+
+        def save_file():
+            f = filedialog.asksaveasfile(initialfile="Untitled.png", defaultextension=".png",
+                                         filetypes=[("Image Documents", "*.png")])
+            self.update_image() #updates button image
+            figure.store_file(f.name)
+
+        selected = IntVar()
+        menu = Menu(self.graph.get_tk_widget(), tearoff=0)
+        menu.add_command(label="Properties")
+        menu.add_separator()
+        menu.add_command(label="Save")
+        menu.add_command(label="Save as...", command=save_file)
+
+        self.graph.get_tk_widget().bind('<Button-3>', do_popup)
+        menu.wait_variable(selected)
 
     def plot_zoom_in(self, event):
         if event.button == EVENTS["LEFT"]:
@@ -119,6 +142,19 @@ class App():
             return
         self.plot_graph(new_chargepol_figure)
 
+    def update_image(self):
+        new_image = Image.open('Saved_files/217resistance.png')
+        resized_image = new_image.resize((100, 100), Image.LANCZOS)
+        self.click_btn = ImageTk.PhotoImage(resized_image)
+        self.my_button.image = new_image
+        self.my_button = Button(root, image=self.click_btn, command=self.update_image, justify=LEFT)
+
+        self.my_button.place(x=7, y=50)
+
+        # img = Image.open('Saved_files/217resistance.png')
+        # resized_image = img.resize((100, 100), Image.LANCZOS)
+        #
+        # self.click_btn = ImageTk.PhotoImage(resized_image)
 
 
 root = Tk()
