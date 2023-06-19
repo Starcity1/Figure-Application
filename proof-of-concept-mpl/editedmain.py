@@ -63,9 +63,8 @@ class App():
 
         # img_label = Label(image=self.click_btn)
 
-        self.my_button = Button(root, image=self.click_btn, command=self.update_image, justify=LEFT)
+        self.reload_file()
 
-        self.my_button.place(x=7, y=50)
 
         buttonUploadFile = tkinter.Button(root, height=1, width=3, bg='green', command=self.upload_file)
         buttonUploadFile.place(x=1239, y=8)
@@ -86,6 +85,7 @@ class App():
             f = filedialog.asksaveasfile(initialfile="Untitled.png", defaultextension=".png",
                                          filetypes=[("Image Documents", "*.png")])
             self.update_image() #updates button image
+
             figure.store_file(f.name)
 
         selected = IntVar()
@@ -142,6 +142,7 @@ class App():
             return
         self.plot_graph(new_chargepol_figure)
 
+
     def update_image(self):
         new_image = Image.open('Saved_files/217resistance.png')
         resized_image = new_image.resize((100, 100), Image.LANCZOS)
@@ -155,6 +156,11 @@ class App():
         # resized_image = img.resize((100, 100), Image.LANCZOS)
         #
         # self.click_btn = ImageTk.PhotoImage(resized_image)
+
+    def reload_file(self):
+        pass
+
+
 
 
 root = Tk()
