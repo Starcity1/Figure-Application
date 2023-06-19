@@ -11,6 +11,7 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationTool
 from matplotlib.gridspec import GridSpec
 import pickle
 import os.path
+from math import sqrt
 
 # TODO: Add the appropiate logic to determine a time interval and initial time.
 # TODO: Create dynamic plots.
@@ -63,6 +64,18 @@ class ChargepolFigure:
             self.time_interval = 0
         else:
             self.time_interval = float(self.time_interval)
+
+        # Determining type of figure.
+        if data['Figure_Type'] == "Density":
+            self.type = FigureType.DENSITY
+        elif data['Figure_Type'] == "Histogram":
+            self.type = FigureType.HISTOGRAM
+        elif data['Figure_Type'] == "Scatter":
+            self.type = FigureType.SCATTER_PLOT
+        elif data['Figure_Type'] == "Houston Map":
+            self.type = FigureType.HMAP
+        else:
+            raise RuntimeError("Invalid figure type.")
 
 
         # figure ax duo will contain all the information of the matplotlib plot itself.
@@ -182,8 +195,6 @@ class ChargepolFigure:
             ax1.plot(xs, density(xs), color=[0, 0, 0], marker=',')
             # Hiding y-axis values
             ax1.set_yticks([])
-
-            # TODO: Implement logic to detect and plot multiple days.
             if int(time_points[-1]) - int(time_points[0]) >= 172800:  # if our interval is greater or equal to 2 days
                  ticks = []
                  for i in range(int(time_points[0]), int(time_points[-1])):
@@ -204,15 +215,53 @@ class ChargepolFigure:
             self.ax.set(xlabel=self.x_label, ylabel=self.y_label)
             self.ax.set_title(self.sup_title)
             plt.grid()
+
         elif self.type == FigureType.HISTOGRAM:
-            # TODO: Plot histogram
-            pass
+            posEventIntAlt = list()
+            negEventIntAlt = list()
+
+            for index, timePoint in enumerate(self.chargepol_data['Timestamp']):
+                if self.initial_time < self.chargepol_data['Timestamp'][index]:
+                    if (self.initial_time + self.time_interval) < self.chargepol_data['Timestamp'][index]: continue
+                    charge = self.chargepol_data['Charge'][0][index]
+                    if charge.strip() == "pos":
+                        posEventIntAlt.append(self.chargepol_data['Charge'][1][index])
+                    if charge.strip() == "neg":
+                        negEventIntAlt.append(self.chargepol_data['Charge'][1][index])
+
+            self.ax.hist(posEventIntAlt, bins=int(sqrt(len(posEventIntAlt))), density=True, color=[1, 0.062, 0.019, 0.7]
+                    , orientation="horizontal")
+            self.ax.hist(negEventIntAlt, bins=int(sqrt(len(negEventIntAlt))), density=True, color=[0.062, 0.019, 1, 0.7]
+                    , orientation="horizontal")
+            self.ax.set(ylabel=self.y_label, xlabel=self.x_label)
+            self.ax.set_title(self.sup_title)
+
         elif self.type == FigureType.SCATTER_PLOT:
-            # TODO: Plot scatter_plot
-            pass
+            def withinInterval(timePoint) -> bool:
+                return self.initial_time < timePoint < (self.initial_time + self.time_interval)
+
+            negAlt = [[], []]  # Index 0 are all longitudes, index 1 are all latitudes
+            posAlt = [[], []]
+
+            for index, event in enumerate(self.chargepol_data['Charge'][0]):
+                if event[0] == 'pos' and withinInterval(self.chargepol_data["Timestamp"][index]):
+                    posAlt[0].append(self.chargepol_data["Timestamp"][index])
+                    posAlt[1].append(event[1])
+                elif event[0] == 'neg' and withinInterval(self.chargepol_data["Timestamp"][index]):
+                    negAlt[0].append(self.chargepol_data["Timestamp"][index])
+                    negAlt[1].append(event[1])
+
+            # TODO: Let user choose whether a vertical or horizontal scatterplot.
+
+            self.ax.scatter(x=negAlt[0], y=negAlt[1], s=8, linewidth=.625, color=[0.062, 0.019, 1], marker="_")
+            self.ax.scatter(x=posAlt[0], y=posAlt[1], s=8, linewidth=.625, color=[1, 0.062, 0.019], marker="+")
+
+            self.ax.set_title(self.sup_title)
+            self.ax.set(ylabel=self.y_label, xlabel=self.x_label)
+
         elif self.type == FigureType.HMAP:
             # TODO: Plot Houston Map
-            pass
+            raise NotImplemented
 
     def getInfo(self) -> dict:
         """
@@ -229,7 +278,7 @@ class ChargepolFigure:
         print(self.fig.get_axes())
 
         parent_dir = filepath.split('/')[:-1]
-        parent_dir.append("pickled_files")
+        parent_dir.append("Saved_files")
         pickle_path = "/".join(parent_dir)
         pickle_filename = filepath.split('/')[-1].split('.')[0]
 
@@ -243,7 +292,7 @@ class ChargepolFigure:
         pickle_file.close()
 
         plt.savefig(filepath)
-
+        plt.savefig(pickle_path + "/" + pickle_filename + ".png")
 class InfoWindow:
     def __init__(self):
         self.new = Toplevel()
@@ -255,27 +304,34 @@ class InfoWindow:
         self.done = IntVar()
 
         # Labels.
-        self.title_label = Label(self.new, text="Title").grid(row=0,column=1, pady=2)
-        self.init_time_label = Label(self.new, text="Initial time").grid(row=1, column=1, pady=2)
-        self.interval_time_label = Label(self.new, text="Time interval").grid(row=2, column=1, pady=2)
-        self.xlabel_label = Label(self.new, text="X-label").grid(row=3, column=0, pady=2)
-        self.ylabel_label = Label(self.new, text="Y-label").grid(row=3, column=2, pady=2)
+        self.figure_type_label = Label(self.new, text="Select type of figure").grid(row=0, column=1, pady=2)
+        self.title_label = Label(self.new, text="Title").grid(row=1,column=1, pady=2)
+        self.init_time_label = Label(self.new, text="Initial time").grid(row=2, column=1, pady=2)
+        self.interval_time_label = Label(self.new, text="Time interval").grid(row=3, column=1, pady=2)
+        self.xlabel_label = Label(self.new, text="X-label").grid(row=4, column=0, pady=2)
+        self.ylabel_label = Label(self.new, text="Y-label").grid(row=4, column=2, pady=2)
 
         # Entries
+        options = ["Density", "Histogram", "Scatter", "Houston Map"]
+        dropdown_res = tkinter.StringVar(self.new)
+        dropdown_res.set("Select an Option")
+        self.figure_type_dropdown = OptionMenu(self.new, dropdown_res, *options)
+        self.figure_type_dropdown.grid(row=0, column=2, pady=2)
+
         self.title_entry = Entry(self.new)
-        self.title_entry.grid(row=0, column=2, pady=2)
+        self.title_entry.grid(row=1, column=2, pady=2)
 
         self.init_time_entry = Entry(self.new)
-        self.init_time_entry.grid(row=1, column=2, pady=2)
+        self.init_time_entry.grid(row=2, column=2, pady=2)
 
         self.interval_time_entry = Entry(self.new)
-        self.interval_time_entry.grid(row=2, column=2, pady=2)
+        self.interval_time_entry.grid(row=3, column=2, pady=2)
 
         self.xlabel_entry = Entry(self.new)
-        self.xlabel_entry.grid(row=3, column=1, pady=2)
+        self.xlabel_entry.grid(row=4, column=1, pady=2)
 
         self.ylabel_entry = Entry(self.new)
-        self.ylabel_entry.grid(row=3, column=3, pady=2)
+        self.ylabel_entry.grid(row=4, column=3, pady=2)
 
         def get_info():
             self.data = {
@@ -284,12 +340,13 @@ class InfoWindow:
                 'Interval': self.interval_time_entry.get(),
                 'Xlabel': self.xlabel_entry.get(),
                 'Ylabel': self.ylabel_entry.get(),
+                'Figure_Type': dropdown_res.get()
             }
             self.done.set(1)
 
         # Button
         self.submit = Button(self.new, text="Submit", command=get_info)
-        self.submit.grid(row=4, column=1, columnspan=2)
+        self.submit.grid(row=5, column=1, columnspan=2)
 
         self.submit.wait_variable(self.done)
         self.new.destroy()

@@ -63,9 +63,7 @@ class App():
 
         # img_label = Label(image=self.click_btn)
 
-        my_button = Button(root, image=self.click_btn, command=self.upload_file, justify=LEFT)
-
-        my_button.place(x=7, y=50)
+        self.reload_file()
 
         buttonUploadFile = tkinter.Button(root, height=1, width=3, bg='green', command=self.upload_file)
         buttonUploadFile.place(x=1239, y=8)
@@ -83,7 +81,7 @@ class App():
                 selected.set(1)
 
         def save_file():
-            f = filedialog.asksaveasfile(initialfile="Untitled.png", defaultextension=".png",
+            f = filedialog.asksaveasfile(initialfile="Upload_test.png", defaultextension=".png",
                                          filetypes=[("Image Documents", "*.png")])
             figure.store_file(f.name)
 
@@ -140,6 +138,9 @@ class App():
         if new_chargepol_figure.chargepol_data is None:
             return
         self.plot_graph(new_chargepol_figure)
+
+    def reload_file(self):
+        pass
 
 
 
