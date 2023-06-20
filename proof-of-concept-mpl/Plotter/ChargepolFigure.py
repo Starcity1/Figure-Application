@@ -12,11 +12,17 @@ from matplotlib.gridspec import GridSpec
 import pickle
 import os.path
 from math import sqrt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import cartopy.io.shapereader as shapereader
+from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
 
 # TODO: Add the appropiate logic to determine a time interval and initial time.
 # TODO: Create dynamic plots.
 # TODO: Be able to reupload a .pickle file containing all the information from a ChargepolFigure plot.
 
+
+TEXAS_COUNTIES = "Dependencies/Texas_County_Boundaries_Detailed/County.shp"
 
 class FigureType(Enum):
     """
@@ -159,6 +165,9 @@ class ChargepolFigure:
         return self.canvas
 
     def plot_data(self):
+        # Utility inner function to determine time interval.
+        def withinInterval(timePoint) -> bool:
+            return self.initial_time < timePoint < (self.initial_time + self.time_interval)
         # Clearing previous data from axis.
         self.ax.clear()
 
@@ -237,31 +246,72 @@ class ChargepolFigure:
             self.ax.set_title(self.sup_title)
 
         elif self.type == FigureType.SCATTER_PLOT:
-            def withinInterval(timePoint) -> bool:
-                return self.initial_time < timePoint < (self.initial_time + self.time_interval)
-
             negAlt = [[], []]  # Index 0 are all longitudes, index 1 are all latitudes
             posAlt = [[], []]
 
             for index, event in enumerate(self.chargepol_data['Charge'][0]):
-                if event[0] == 'pos' and withinInterval(self.chargepol_data["Timestamp"][index]):
+                if event == 'pos' and withinInterval(self.chargepol_data["Timestamp"][index]):
                     posAlt[0].append(self.chargepol_data["Timestamp"][index])
-                    posAlt[1].append(event[1])
-                elif event[0] == 'neg' and withinInterval(self.chargepol_data["Timestamp"][index]):
+                    posAlt[1].append(self.chargepol_data['Charge'][1][index])
+                elif event == 'neg' and withinInterval(self.chargepol_data["Timestamp"][index]):
                     negAlt[0].append(self.chargepol_data["Timestamp"][index])
-                    negAlt[1].append(event[1])
+                    negAlt[1].append(self.chargepol_data['Charge'][1][index])
 
             # TODO: Let user choose whether a vertical or horizontal scatterplot.
 
-            self.ax.scatter(x=negAlt[0], y=negAlt[1], s=8, linewidth=.625, color=[0.062, 0.019, 1], marker="_")
-            self.ax.scatter(x=posAlt[0], y=posAlt[1], s=8, linewidth=.625, color=[1, 0.062, 0.019], marker="+")
+            print(len(negAlt[0]))
+
+            self.ax.scatter(x=negAlt[0], y=negAlt[1], s=10, linewidth=.625, color=[0.062, 0.019, 1], marker="_")
+            self.ax.scatter(x=posAlt[0], y=posAlt[1], s=10, linewidth=.625, color=[1, 0.062, 0.019], marker="+")
 
             self.ax.set_title(self.sup_title)
             self.ax.set(ylabel=self.y_label, xlabel=self.x_label)
 
         elif self.type == FigureType.HMAP:
-            # TODO: Plot Houston Map
-            raise NotImplemented
+            negPos = [[], []]  # Index 0 are all longitudes, index 1 are all latitudes
+            posPos = [[], []]
+
+            for index, event in enumerate(self.chargepol_data['Charge'][0]):
+                if event == 'pos' and withinInterval(self.chargepol_data["Timestamp"][index]):
+                    posPos[0].append(float(self.chargepol_data['Location'][0][index]))
+                    posPos[1].append(float(self.chargepol_data['Location'][1][index]))
+                elif event == 'neg' and withinInterval(self.chargepol_data["Timestamp"][index]):
+                    negPos[0].append(float(self.chargepol_data['Location'][0][index]))
+                    negPos[1].append(float(self.chargepol_data['Location'][1][index]))
+
+            # Removing pre-created axis.
+
+            self.fig.get_axes()[0].set_axis_off()
+            # Redefining self.ax to a cartopy-geosubaxes
+            self.ax1 = self.fig.add_subplot(projection=ccrs.PlateCarree())
+
+
+            county_lines = cfeature.ShapelyFeature(shapereader.Reader(TEXAS_COUNTIES).geometries(), ccrs.PlateCarree(),
+                                                   facecolor='none', edgecolor='black', lw=1)
+            self.ax1.add_feature(county_lines)
+
+            # Zoom in on the Houston area by setting longitude/latitude parameters
+            self.ax1.set_extent(
+                [-98, -92, 28, 32],
+                crs=ccrs.PlateCarree()
+            )
+
+            # , s=4, linewidth=.5, color=[1, 0.062, 0.019, .5]
+            self.ax1.scatter(x=posPos[0], y=posPos[1], s=4, linewidth=.5, color=[1, 0.062, 0.019, .5],
+                             marker='+', transform=ccrs.PlateCarree())
+
+            # , s=4, linewidth=.5, color=[0.062, 0.019, 1, .5]
+            self.ax1.scatter(x=negPos[0], y=negPos[1], s=4, linewidth=.5, color=[0.062, 0.019, 1, .5],
+                             marker='_', transform=ccrs.PlateCarree())
+
+            gl = self.ax1.gridlines(crs=ccrs.PlateCarree(), draw_labels=True)
+            gl.top_labels = False
+            gl.right_labels = False
+            gl.xformatter = LONGITUDE_FORMATTER
+            gl.yformatter = LATITUDE_FORMATTER
+
+            self.ax1.set_title(self.sup_title)
+
 
     def getInfo(self) -> dict:
         """

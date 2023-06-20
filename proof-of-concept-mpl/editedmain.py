@@ -63,8 +63,11 @@ class App():
 
         # img_label = Label(image=self.click_btn)
 
-        self.reload_file()
+        self.my_button = Button(root, image=self.click_btn, command=self.update_image, justify=LEFT)
 
+        self.my_button.place(x=7, y=50)
+
+        self.reload_file()
 
         buttonUploadFile = tkinter.Button(root, height=1, width=3, bg='green', command=self.upload_file)
         buttonUploadFile.place(x=1239, y=8)
@@ -168,6 +171,7 @@ root = Tk()
 def on_closing():
     if messagebox.askokcancel("Quit", "Do you want to quit?"):
         root.destroy()
+        plt.close()
         quit()
 
 app = App(root)
