@@ -171,7 +171,6 @@ class ChargepolFigure:
         if self.type == FigureType.DENSITY:
             # TODO: Plot density plot
             time_points = list()
-            # print(list(enumerate(timeList)))
             for index, time in enumerate(self.chargepol_data['Timestamp']):
                 if self.initial_time < time:
                     if (self.initial_time + self.time_interval) < self.chargepol_data['Timestamp'][index]: continue
@@ -245,6 +244,7 @@ class ChargepolFigure:
         elif self.type == FigureType.SCATTER_PLOT:
             negAlt = [[], []]  # Index 0 are all longitudes, index 1 are all latitudes
             posAlt = [[], []]
+            time_points = list()
 
             for index, event in enumerate(self.chargepol_data['Charge'][0]):
                 if event == 'pos' and withinInterval(self.chargepol_data["Timestamp"][index]):
@@ -253,9 +253,26 @@ class ChargepolFigure:
                 elif event == 'neg' and withinInterval(self.chargepol_data["Timestamp"][index]):
                     negAlt[0].append(self.chargepol_data["Timestamp"][index])
                     negAlt[1].append(self.chargepol_data['Charge'][1][index])
+                time_points.append(self.chargepol_data["Timestamp"][index])
 
             # TODO: Let user choose whether a vertical or horizontal scatterplot.
 
+            if int(time_points[-1]) - int(time_points[0]) >= 172800:  # if our interval is greater or equal to 2 days
+                 ticks = []
+                 for i in range(int(time_points[0]), int(time_points[-1])):
+                     if i % 86400 == 0:
+                         ticks.append(i)
+                 plt.xticks(ticks)
+                 self.ax.figure.canvas.draw()
+                 labels = [item.get_text() for item in self.ax.get_xticklabels()]
+                 startingDateChargePol = int(self.initial_time / 86400)
+                 endingDateChargePol = startingDateChargePol + len(ticks)
+                 self.dateList = self.dateList[startingDateChargePol:endingDateChargePol]
+                 #print(self.dateList)
+                 for i, n in enumerate(self.dateList):
+                     labels[i] = self.dateList[i]
+                 self.ax.set_xticklabels(labels)
+                
             self.ax.scatter(x=negAlt[0], y=negAlt[1], s=10, linewidth=.625, color=[0.062, 0.019, 1], marker="_")
             self.ax.scatter(x=posAlt[0], y=posAlt[1], s=10, linewidth=.625, color=[1, 0.062, 0.019], marker="+")
 
@@ -313,7 +330,7 @@ class ChargepolFigure:
         Creates a new widget window that allows the user to input all labels and titles for this instance figure.
         :return: Tuple containing all the information.
         """
-        window = InfoWindow()
+        window = InfoWindow(self.chargepol_data)
         return window.data
 
     # See object serialization for this file.
@@ -339,22 +356,29 @@ class ChargepolFigure:
         plt.savefig(filepath)
         plt.savefig(pickle_path + "/" + pickle_filename + ".png")
 class InfoWindow:
-    def __init__(self):
+    def __init__(self, Chargepol):
+
         self.new = Toplevel()
         self.new.geometry("720x576")
         self.new.title("Information")
         self.new.resizable = False
 
         self.data = dict()
-        self.done = IntVar()
 
+        self.done = IntVar()
+        begintime = round(Chargepol['Timestamp'][0])
+        endtime = round(Chargepol['Timestamp'][-1])
+        intervalrange = "Interval is from", begintime, "to", endtime, "seconds."
         # Labels.
-        self.figure_type_label = Label(self.new, text="Select type of figure").grid(row=0, column=1, pady=2, sticky='news')
-        self.title_label = Label(self.new, text="Title").grid(row=1,column=1, pady=2, sticky='news')
-        self.init_time_label = Label(self.new, text="Initial time").grid(row=2, column=1, pady=2, sticky='news')
-        self.interval_time_label = Label(self.new, text="Time interval").grid(row=3, column=1, pady=2, sticky='news')
-        self.xlabel_label = Label(self.new, text="X-label").grid(row=4, column=0, pady=2, sticky='news')
-        self.ylabel_label = Label(self.new, text="Y-label").grid(row=4, column=2, pady=2, sticky='news')
+
+        self.figure_type_label = Label(self.new, text="Select type of figure").grid(row=0, column=1, pady=2)
+        self.title_label = Label(self.new, text="Title").grid(row=1,column=1, pady=2)
+        self.init_time_label = Label(self.new, text="Initial time").grid(row=2, column=1, pady=2)
+        self.interval_range = Label(self.new, text=intervalrange).grid(row=2, column=3, pady=2)
+        self.interval_time_label = Label(self.new, text="Time interval").grid(row=3, column=1, pady=2)
+        self.xlabel_label = Label(self.new, text="X-label").grid(row=4, column=0, pady=2)
+        self.ylabel_label = Label(self.new, text="Y-label").grid(row=4, column=2, pady=2)
+
 
         # Entries
         options = ["Density", "Histogram", "Scatter", "Houston Map"]
