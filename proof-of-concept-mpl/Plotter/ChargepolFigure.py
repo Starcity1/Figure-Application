@@ -17,7 +17,6 @@ import cartopy.feature as cfeature
 import cartopy.io.shapereader as shapereader
 from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
 
-# TODO: Add the appropiate logic to determine a time interval and initial time.
 # TODO: Create dynamic plots.
 # TODO: Be able to reupload a .pickle file containing all the information from a ChargepolFigure plot.
 
@@ -114,10 +113,8 @@ class ChargepolFigure:
 
         self.dateList = list()
         for i, n in enumerate(self.filep):
-            print(self.filep[i])
             self.dateList.append(self.filep[i][-8:-6] + "/" + self.filep[i][-6:-4])
 
-        print(self.dateList)
         return res
 
     def verify_file(self) -> pd.DataFrame:
@@ -260,7 +257,6 @@ class ChargepolFigure:
 
             # TODO: Let user choose whether a vertical or horizontal scatterplot.
 
-            print(len(negAlt[0]))
             if int(time_points[-1]) - int(time_points[0]) >= 172800:  # if our interval is greater or equal to 2 days
                  ticks = []
                  for i in range(int(time_points[0]), int(time_points[-1])):
@@ -276,7 +272,7 @@ class ChargepolFigure:
                  for i, n in enumerate(self.dateList):
                      labels[i] = self.dateList[i]
                  self.ax.set_xticklabels(labels)
-
+                
             self.ax.scatter(x=negAlt[0], y=negAlt[1], s=10, linewidth=.625, color=[0.062, 0.019, 1], marker="_")
             self.ax.scatter(x=posAlt[0], y=posAlt[1], s=10, linewidth=.625, color=[1, 0.062, 0.019], marker="+")
 
@@ -374,6 +370,7 @@ class InfoWindow:
         endtime = round(Chargepol['Timestamp'][-1])
         intervalrange = "Interval is from", begintime, "to", endtime, "seconds."
         # Labels.
+
         self.figure_type_label = Label(self.new, text="Select type of figure").grid(row=0, column=1, pady=2)
         self.title_label = Label(self.new, text="Title").grid(row=1,column=1, pady=2)
         self.init_time_label = Label(self.new, text="Initial time").grid(row=2, column=1, pady=2)
@@ -382,27 +379,28 @@ class InfoWindow:
         self.xlabel_label = Label(self.new, text="X-label").grid(row=4, column=0, pady=2)
         self.ylabel_label = Label(self.new, text="Y-label").grid(row=4, column=2, pady=2)
 
+
         # Entries
         options = ["Density", "Histogram", "Scatter", "Houston Map"]
         dropdown_res = tkinter.StringVar(self.new)
         dropdown_res.set("Select an Option")
         self.figure_type_dropdown = OptionMenu(self.new, dropdown_res, *options)
-        self.figure_type_dropdown.grid(row=0, column=2, pady=2)
+        self.figure_type_dropdown.grid(row=0, column=2, pady=2, sticky='news')
 
         self.title_entry = Entry(self.new)
-        self.title_entry.grid(row=1, column=2, pady=2)
+        self.title_entry.grid(row=1, column=2, pady=2, sticky='news')
 
         self.init_time_entry = Entry(self.new)
-        self.init_time_entry.grid(row=2, column=2, pady=2)
+        self.init_time_entry.grid(row=2, column=2, pady=2, sticky='news')
 
         self.interval_time_entry = Entry(self.new)
-        self.interval_time_entry.grid(row=3, column=2, pady=2)
+        self.interval_time_entry.grid(row=3, column=2, pady=2, sticky='news')
 
         self.xlabel_entry = Entry(self.new)
-        self.xlabel_entry.grid(row=4, column=1, pady=2)
+        self.xlabel_entry.grid(row=4, column=1, pady=2, sticky='news')
 
         self.ylabel_entry = Entry(self.new)
-        self.ylabel_entry.grid(row=4, column=3, pady=2)
+        self.ylabel_entry.grid(row=4, column=3, pady=2, sticky='news')
 
         def get_info():
             self.data = {
