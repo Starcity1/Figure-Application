@@ -368,7 +368,7 @@ class InfoWindow:
         self.done = IntVar()
         begintime = round(Chargepol['Timestamp'][0])
         endtime = round(Chargepol['Timestamp'][-1])
-        intervalrange = "Interval is from", begintime, "to", endtime, "seconds."
+        intervalrange = f"Interval is from {begintime} to {endtime} seconds."
         # Labels.
 
         self.figure_type_label = Label(self.new, text="Select type of figure").grid(row=0, column=1, pady=2)
