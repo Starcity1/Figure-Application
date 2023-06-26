@@ -5,5 +5,8 @@
 - Create a 'properties' button to modify the current plot. (David)
 - Resize stuff
 - Add title of graph below its display
-- Decide what type of data we can upload (chargepol, raw data).
-- Dark mode
+- Implement a way to load .hdf5 files to chargepol.
+- Implement a way to load raw data files to lma tools and transform them to .hdf5 files.
+- From pickle file and saved_png load them into instance of application.
+- Looking into other formats we would like to implement (PERSIANN, src events, MRMS, etc.)
+- Dark mode (top priority /j)
