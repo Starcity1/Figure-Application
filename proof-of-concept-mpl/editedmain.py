@@ -111,8 +111,7 @@ class App():
             else:
                 figure.time_interval = float(figure.time_interval)
 
-            figure.update_plot()
-
+            self.graph = figure.update_plot()
             self.graph.get_tk_widget().bind('<Button-3>', do_popup)
 
         selected = IntVar()
@@ -126,9 +125,8 @@ class App():
 
         # TODO: Figure Out why popup menu can only be clicked once.
 
-        while True:
-            self.graph.get_tk_widget().bind('<Button-3>', do_popup)
-            menu.wait_variable(selected)
+        self.graph.get_tk_widget().bind('<Button-3>', do_popup)
+        menu.wait_variable(selected)
 
     def plot_zoom_in(self, event):
         if event.button == EVENTS["LEFT"]:
