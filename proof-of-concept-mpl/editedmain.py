@@ -14,6 +14,7 @@ from tkinter.filedialog import askdirectory
 
 # Other scripts in project
 from Plotter import ChargepolFigure
+from Plotter import Properties
 
 # Matplotlib backend for canvas
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -91,15 +92,43 @@ class App():
 
             figure.store_file(f.name)
 
+        def update_plot():
+            data = Properties.configure(figure)
+            figure.sup_title = data['Title']
+            figure.x_label = data['Xlabel']
+            figure.y_label = data['Ylabel']
+            figure.initial_time = float(data['Init_Time'])
+            figure.time_interval = float(data['Interval'])
+
+            # Verifying if info is good.
+            if figure.initial_time == '':
+                figure.initial_time = 0
+            else:
+                figure.initial_time = float(figure.initial_time)
+
+            if figure.time_interval == '':
+                figure.time_interval = 0
+            else:
+                figure.time_interval = float(figure.time_interval)
+
+            figure.update_plot()
+
+            self.graph.get_tk_widget().bind('<Button-3>', do_popup)
+
         selected = IntVar()
         menu = Menu(self.graph.get_tk_widget(), tearoff=0)
-        menu.add_command(label="Properties")
+        menu.add_command(label="Properties", command=update_plot)
         menu.add_separator()
         menu.add_command(label="Save")
         menu.add_command(label="Save as...", command=save_file)
 
-        self.graph.get_tk_widget().bind('<Button-3>', do_popup)
-        menu.wait_variable(selected)
+        # Main Loop after widget is created.
+
+        # TODO: Figure Out why popup menu can only be clicked once.
+
+        while True:
+            self.graph.get_tk_widget().bind('<Button-3>', do_popup)
+            menu.wait_variable(selected)
 
     def plot_zoom_in(self, event):
         if event.button == EVENTS["LEFT"]:
@@ -159,7 +188,6 @@ class App():
         # resized_image = img.resize((100, 100), Image.LANCZOS)
         #
         # self.click_btn = ImageTk.PhotoImage(resized_image)
-
     def reload_file(self):
         pass
 

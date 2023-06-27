@@ -161,6 +161,20 @@ class ChargepolFigure:
 
         return self.canvas
 
+    def update_plot(self):
+        for ax in self.fig.get_axes():
+            ax.clear()
+
+        self.ax.set_title(self.sup_title)
+        self.ax.set_xlabel(self.x_label)
+        self.ax.set_ylabel(self.y_label)
+        self.ax.set_xlim(right=self.initial_time + self.time_interval)
+        self.ax.set_xlim(left=self.initial_time)
+
+        self.plot_data()
+
+        return self.createWidget()
+
     def plot_data(self):
         # Utility inner function to determine time interval.
         def withinInterval(timePoint) -> bool:
