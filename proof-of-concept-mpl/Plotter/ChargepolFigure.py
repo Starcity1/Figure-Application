@@ -40,7 +40,10 @@ class ChargepolFigure:
     in the application. It (will) contain various functions that allow us to easily plot such figures in the application.
     As well as to get useful information about the plot and the ability to modify such plots in run-time.
     """
-    def __init__(self, filepath, master: Frame, type_fig: FigureType):
+    def __init__(self, filepath, master: Frame, type_fig: FigureType, load_from_file = False):
+        if load_from_file:
+
+
         self.filep = filepath
         self.chargepol_data = self.process_chargepol()
         #print(self.chargepol_data["Timestamp"])
@@ -355,7 +358,6 @@ class ChargepolFigure:
     def store_file(self, filepath: str):
         # Creating pickle folder.
         # Redrawing plot.
-        print(self.fig.get_axes())
 
         parent_dir = filepath.split('/')[:-1]
         parent_dir.append("Saved_files")
@@ -368,11 +370,20 @@ class ChargepolFigure:
         # Original file ::
 
         pickle_file = open(pickle_path + "/" + pickle_filename + ".pickle", 'wb')
-        pickle.dump((self.fig, self.fig.get_axes()), pickle_file)
+
+        # Instead of pickling the plots themselves, we will plot the data to create the plots. That is:
+        # chargepol data (self.chargepol_data), info about plot: (self.sup_title, self.initial_time, self.time_interval
+        # self.x_label, self.y_label. And creating this new instance we plot values again.
+
+        pickle.dump({
+            "Chargepol Data": self.chargepol_data,
+            "Plot Information": [self.type, self.sup_title, self.initial_time, self.time_interval, self.x_label, self.y_label]
+        }, pickle_file)
         pickle_file.close()
 
         plt.savefig(filepath)
         plt.savefig(pickle_path + "/" + pickle_filename + ".png")
+
 class InfoWindow:
     def __init__(self, Chargepol):
 

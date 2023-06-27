@@ -11,6 +11,8 @@ from math import sqrt
 from tkinter import filedialog
 import tkinter.messagebox as messagebox
 from tkinter.filedialog import askdirectory
+import os
+import pickle
 
 # Other scripts in project
 from Plotter import ChargepolFigure
@@ -26,11 +28,20 @@ EVENTS = {
     "RIGHT": mpl.backend_bases.MouseButton.RIGHT
 }
 
+# TODO: Find where to store the static file SAVEDFILES
+
+SAVED_FILES_PATH = "Saved_files/"
+
 class App():
     def __init__(self, master):
         master.grid()
         master.geometry("1280x720")
         root.title("Proof of concept. Interactive matplotlib")
+
+        # This empty list will parse and store all ChargepolFigures found in Saved_Files
+        self.chargepolfigure_objects = list()
+        self.saved_figures = dict()
+        self.load_all_figures()
 
         # Frame 1 styling.
         self.option_window = LabelFrame(master, bg='#323f4a', borderwidth=0, width=master.winfo_screenwidth() / 5,
@@ -57,18 +68,20 @@ class App():
         self.graph_window = Frame(self.display_window, background='#536878')
         self.graph_window.place(relx=0.5, rely=0.5, relwidth=0.9, relheight=0.9, anchor=CENTER)
 
-        img = Image.open('Saved_files/densityplot.png')
-        resized_image = img.resize((100, 100), Image.LANCZOS)
+        #! Uncomment when done with unpickling
 
-        self.click_btn = ImageTk.PhotoImage(resized_image)
+        # img = Image.open('Saved_files/densityplot.png')
+        # resized_image = img.resize((100, 100), Image.LANCZOS)
+        #
+        # self.click_btn = ImageTk.PhotoImage(resized_image)
+        #
+        # # img_label = Label(image=self.click_btn)
+        #
+        # self.my_button = Button(root, image=self.click_btn, command=self.update_image, justify=LEFT)
 
-        # img_label = Label(image=self.click_btn)
-
-        self.my_button = Button(root, image=self.click_btn, command=self.update_image, justify=LEFT)
-
-        self.my_button.place(x=7, y=50)
-
-        self.reload_file()
+        # self.my_button.place(x=7, y=50)
+        #
+        # self.reload_file()
 
         buttonUploadFile = tkinter.Button(root, height=1, width=3, bg='green', command=self.upload_file)
         buttonUploadFile.place(x=1239, y=8)
@@ -174,20 +187,39 @@ class App():
 
 
     def update_image(self):
-        new_image = Image.open('Saved_files/217resistance.png')
-        resized_image = new_image.resize((100, 100), Image.LANCZOS)
-        self.click_btn = ImageTk.PhotoImage(resized_image)
-        self.my_button.image = new_image
-        self.my_button = Button(root, image=self.click_btn, command=self.update_image, justify=LEFT)
+        # new_image = Image.open('Saved_files/217resistance.png')
+        # resized_image = new_image.resize((100, 100), Image.LANCZOS)
+        # self.click_btn = ImageTk.PhotoImage(resized_image)
+        # self.my_button.image = new_image
+        # self.my_button = Button(root, image=self.click_btn, command=self.update_image, justify=LEFT)
 
-        self.my_button.place(x=7, y=50)
+        # self.my_button.place(x=7, y=50)
 
         # img = Image.open('Saved_files/217resistance.png')
         # resized_image = img.resize((100, 100), Image.LANCZOS)
         #
         # self.click_btn = ImageTk.PhotoImage(resized_image)
-    def reload_file(self):
         pass
+    def load_all_figures(self):
+        """Loads all figures found in the static saved_files file"""
+        global SAVED_FILES_PATH
+        for filename in os.listdir(SAVED_FILES_PATH):
+            if filename.split(".")[0] not in self.saved_figures:
+                self.saved_figures[filename.split(".")[0]] = [os.path.join(SAVED_FILES_PATH, filename)]
+            else:
+                self.saved_figures[filename.split(".")[0]].append(os.path.join(SAVED_FILES_PATH, filename))
+
+        # Create all ChargepolFigure Objects. Remember pickle file contains all the essential information about the file.
+        for name, contents in self.saved_figures.items():
+            pickle_file = ""
+            for file in contents:
+                if '.pickle' in file:
+                    pickle_file = file
+
+            with open(pickle_file, 'rb') as active_file:
+                figure_data = pickle.load(active_file)
+
+
 
 
 
