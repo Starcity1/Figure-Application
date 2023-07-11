@@ -40,13 +40,24 @@ class ChargepolFigure:
     in the application. It (will) contain various functions that allow us to easily plot such figures in the application.
     As well as to get useful information about the plot and the ability to modify such plots in run-time.
     """
-    def __init__(self, filepath, master: Frame, type_fig: FigureType, load_from_file = False):
-        if load_from_file:
-            pass
+    def __init__(self, filepath, master: Frame, type_fig: FigureType, load_from_file=False, saved_obj = None):
+        if load_from_file and saved_obj is not None:
+            # The saved_object is of format "Chargepol Data"
+            # "Plot Information" -> [type, sup_title, initi_time, time_interval, x_label, y_label
+
+            self.chargepol_data = saved_obj["Chargepol Data"]
+
+            self.type = saved_obj["Plot Information"][0]
+            self.sup_title = saved_obj["Plot Information"][1]
+            self.initial_time = saved_obj["Plot Information"][2]
+            self.time_interval = saved_obj["Plot Information"][3]
+            self.x_label = saved_obj["Plot Information"][4]
+            self.y_label = saved_obj["Plot Information"][5]
+            return
 
         self.filep = filepath
         self.chargepol_data = self.process_chargepol()
-        #print(self.chargepol_data["Timestamp"])
+        # print(self.chargepol_data["Timestamp"])
         if self.chargepol_data is None:
             return
 
