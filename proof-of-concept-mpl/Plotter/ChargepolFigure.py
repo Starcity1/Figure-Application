@@ -42,7 +42,7 @@ class ChargepolFigure:
     """
     def __init__(self, filepath, master: Frame, type_fig: FigureType, load_from_file = False):
         if load_from_file:
-
+            pass
 
         self.filep = filepath
         self.chargepol_data = self.process_chargepol()
