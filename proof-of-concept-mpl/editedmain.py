@@ -191,13 +191,15 @@ class App():
     def generate_objects(self):
         """Generates the respective chargepol_figure objects"""
 
-        def create_image(master=Frame, filename=str):
-            img = Image.open(filename)
-            resized_image = img.resize((100, 100), Image.LANCZOS)
+        def create_image(master:Frame, filename:str, w, h):
+            print(filename)
+            load = Image.open(fp=filename)
+            resized_load = load.resize((w, h), Image.LANCZOS)
+            render = ImageTk.PhotoImage(resized_load)
 
-            click_btn = ImageTk.PhotoImage(resized_image)
-
-            img_label = Label(master=master, image=click_btn)
+            img = Button(master=master, image=render, command=self.move_to_display, justify=LEFT)
+            img.image = render
+            img.place(relx=0, rely=0, relheight=1, relwidth=1)
 
 
         relx = 0.5; rely = 0.05
@@ -209,9 +211,15 @@ class App():
             new_object = ChargepolFigure.ChargepolFigure(None, new_frame, None,
                                                          load_from_file=True, saved_obj=data)
 
-            create_image(new_frame, name+".png")
+            new_frame.update()
+            create_image(new_frame, name+".png", new_frame.winfo_width(), new_frame.winfo_height())
+
+            self.chargepolfigure_objects[name] = new_object
 
             rely += 0.20
+
+    def move_to_display(self):
+        raise NotImplemented
 
 
 root = Tk()
