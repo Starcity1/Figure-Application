@@ -1,6 +1,7 @@
 from enum import Enum
 import tkinter
 from tkinter import *
+from tkinter import ttk
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import tkinter.messagebox as messagebox
@@ -404,6 +405,7 @@ class InfoWindow:
         self.new.resizable = False
 
         self.data = dict()
+        self.timeInterval = None
 
         self.done = IntVar()
         begintime = round(Chargepol['Timestamp'][0])
@@ -418,23 +420,25 @@ class InfoWindow:
         self.xlabel_label = Label(self.new, text="X-label").grid(row=4, column=0, pady=2)
         self.ylabel_label = Label(self.new, text="Y-label").grid(row=4, column=2, pady=2)
 
-        def handle_dropdown(*args):
-            if dropdown_res1.get() == "Custom":
+        def on_dropdown_select(event):
+            if self.dropdown_res1.get() == "Custom":
                 self.interval_time_entry.config(state=NORMAL)
-                self.interval_time_entry = Entry(self.new)
-                self.timeInterval = self.interval_time_entry.get()
-            elif dropdown_res1.get() == "1 hour":
+                #self.submit_button.config(state=NORMAL)
+            elif self.dropdown_res1.get() == "1 hour":
                 self.timeInterval = 3600
                 self.interval_time_entry.config(state=DISABLED)
-            elif dropdown_res1.get() == "5 hour":
+            elif self.dropdown_res1.get() == "5 hour":
                 self.timeInterval = 18000
                 self.interval_time_entry.config(state=DISABLED)
-            elif dropdown_res1.get() == "10 hour":
+            elif self.dropdown_res1.get() == "10 hour":
                 self.timeInterval = 36000
                 self.interval_time_entry.config(state=DISABLED)
-            elif dropdown_res1.get() == "24 hour":
+            elif self.dropdown_res1.get() == "24 hour":
                 self.timeInterval = 86400
                 self.interval_time_entry.config(state=DISABLED)
+
+        # def submit_custom_time():
+        #     self.timeInterval = int(self.interval_time_entry.get())
 
         # Entries
         options = ["Density", "Histogram", "Scatter", "Houston Map"]
@@ -449,16 +453,18 @@ class InfoWindow:
         self.init_time_entry = Entry(self.new)
         self.init_time_entry.grid(row=2, column=2, pady=2)
 
-        options1 = ["1 hour", "5 hour", "10 hour", "24 hour", "Custom"]
-        dropdown_res1 = tkinter.StringVar(self.new)
-        dropdown_res1.set("Select interval")
-        self.interval_type_dropdown = OptionMenu(self.new, dropdown_res1, *options1)
+        self.options1 = ["1 hour", "5 hour", "10 hour", "24 hour", "Custom"]
+        self.dropdown_res1 = tkinter.StringVar(self.new)
+        self.dropdown_res1.set("Select interval")
+        self.interval_type_dropdown = ttk.Combobox(self.new, textvariable=self.dropdown_res1, values=self.options1)
         self.interval_type_dropdown.grid(row=3, column=2, pady=2)
+        self.interval_type_dropdown.bind("<<ComboboxSelected>>", on_dropdown_select)
+
+        # self.submit_button = tkinter.Button(self.new, text="Submit", state=DISABLED, command=submit_custom_time)
+        # self.submit_button.grid(row=3, column=4, pady=2)
 
         self.interval_time_entry = Entry(self.new, state= DISABLED)
         self.interval_time_entry.grid(row=3, column=3, pady=2)
-
-        dropdown_res1.trace("w", handle_dropdown)
 
         self.xlabel_entry = Entry(self.new)
         self.xlabel_entry.grid(row=4, column=1, pady=2)
@@ -467,7 +473,9 @@ class InfoWindow:
         self.ylabel_entry.grid(row=4, column=3, pady=2)
 
         def get_info():
-            print(self.timeInterval)
+            if self.timeInterval == None:
+                self.timeInterval = int(self.interval_time_entry.get())
+
             self.data = {
                 'Title': self.title_entry.get(),
                 'Init_Time': self.init_time_entry.get(),
