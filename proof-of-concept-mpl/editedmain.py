@@ -34,14 +34,10 @@ SAVED_FILES_PATH = "Saved_files/"
 
 class App():
     def __init__(self, master):
-        master.grid()
-        master.geometry("1280x720")
+        self.master = master
+        self.master.grid()
+        self.master.geometry("1280x720")
         root.title("Proof of concept. Interactive matplotlib")
-
-        # This empty list will parse and store all ChargepolFigures found in Saved_Files
-        self.chargepolfigure_objects = list()
-        self.saved_figures = dict()
-        self.load_all_figures()
 
         # Frame 1 styling.
         self.option_window = LabelFrame(master, bg='#323f4a', borderwidth=0, width=master.winfo_screenwidth() / 5,
@@ -63,6 +59,12 @@ class App():
         master.columnconfigure(0, weight=1)
         master.rowconfigure(0, weight=1)
 
+        # This empty list will parse and store all ChargepolFigures found in Saved_Files
+        self.chargepolfigure_objects = dict()
+        self.saved_data = dict()
+        self.saved_figures = dict()
+        self.load_all_figures()
+        self.generate_objects()
 
         # Initializing window where graph will live.
         self.graph_window = Frame(self.display_window, background='#536878')
@@ -136,42 +138,8 @@ class App():
 
         # Main Loop after widget is created.
 
-        # TODO: Figure Out why popup menu can only be clicked once.
-
         self.graph.get_tk_widget().bind('<Button-3>', do_popup)
         menu.wait_variable(selected)
-
-    def plot_zoom_in(self, event):
-        if event.button == EVENTS["LEFT"]:
-            # print(f"plot_zoom_in detecting {EVENTS['LEFT']}.")
-            # print(f"Mouse position :: x: {event.xdata}; y: {event.ydata}")
-            x_min, x_max = self.ax.get_xlim()
-            y_min, y_max = self.ax.get_ylim()
-
-            x_dist = ((x_max - x_min) / 2)
-            y_dist = ((y_max - y_min) / 2)
-
-            print(x_min, x_max)
-
-            self.ax.set_xlim((event.xdata - x_dist) * .95, (event.xdata + x_dist) * .95)
-            self.ax.set_ylim((event.ydata - y_dist) * .95, (event.ydata + y_dist) * .95)
-
-            self.canvas.draw()
-
-    def plot_zoom_out(self, event):
-        if event.button == EVENTS["RIGHT"]:
-            x_min, x_max = self.ax.get_xlim()
-            y_min, y_max = self.ax.get_ylim()
-
-            x_dist = ((x_max - x_min) / 2)
-            y_dist = ((y_max - y_min) / 2)
-
-            print(x_min, x_max)
-
-            self.ax.set_xlim((event.xdata - x_dist) * 1.05, (event.xdata + x_dist) * 1.05)
-            self.ax.set_ylim((event.ydata - y_dist) * 1.05, (event.ydata + y_dist) * 1.05)
-
-            self.canvas.draw()
 
     def upload_file(self):
         # path = askdirectory(initialdir=',')
@@ -184,7 +152,6 @@ class App():
         if new_chargepol_figure.chargepol_data is None:
             return
         self.plot_graph(new_chargepol_figure)
-
 
     def update_image(self):
         # new_image = Image.open('Saved_files/217resistance.png')
@@ -200,14 +167,15 @@ class App():
         #
         # self.click_btn = ImageTk.PhotoImage(resized_image)
         pass
+
     def load_all_figures(self):
         """Loads all figures found in the static saved_files file"""
         global SAVED_FILES_PATH
         for filename in os.listdir(SAVED_FILES_PATH):
-            if filename.split(".")[0] not in self.saved_figures:
-                self.saved_figures[filename.split(".")[0]] = [os.path.join(SAVED_FILES_PATH, filename)]
+            if SAVED_FILES_PATH + filename.split(".")[0] not in self.saved_figures:
+                self.saved_figures[SAVED_FILES_PATH + filename.split(".")[0]] = [os.path.join(SAVED_FILES_PATH, filename)]
             else:
-                self.saved_figures[filename.split(".")[0]].append(os.path.join(SAVED_FILES_PATH, filename))
+                self.saved_figures[SAVED_FILES_PATH + filename.split(".")[0]].append(os.path.join(SAVED_FILES_PATH, filename))
 
         # Create all ChargepolFigure Objects. Remember pickle file contains all the essential information about the file.
         for name, contents in self.saved_figures.items():
@@ -218,10 +186,40 @@ class App():
 
             with open(pickle_file, 'rb') as active_file:
                 figure_data = pickle.load(active_file)
+                self.saved_data[name] = figure_data
+
+    def generate_objects(self):
+        """Generates the respective chargepol_figure objects"""
+
+        def create_image(master:Frame, filename:str, w, h):
+            print(filename)
+            load = Image.open(fp=filename)
+            resized_load = load.resize((w, h), Image.LANCZOS)
+            render = ImageTk.PhotoImage(resized_load)
+
+            img = Button(master=master, image=render, command=self.move_to_display, justify=LEFT)
+            img.image = render
+            img.place(relx=0, rely=0, relheight=1, relwidth=1)
 
 
+        relx = 0.5; rely = 0.05
+        width = 0.5
+        for name, data in self.saved_data.items():
+            new_frame = Frame(master=self.option_window, pady=20)
+            new_frame.place(relx=relx, rely=rely, relwidth=width, relheight=0.15, anchor=N)
 
+            new_object = ChargepolFigure.ChargepolFigure(None, new_frame, None,
+                                                         load_from_file=True, saved_obj=data)
 
+            new_frame.update()
+            create_image(new_frame, name+".png", new_frame.winfo_width(), new_frame.winfo_height())
+
+            self.chargepolfigure_objects[name] = new_object
+
+            rely += 0.20
+
+    def move_to_display(self):
+        raise NotImplemented
 
 
 root = Tk()
