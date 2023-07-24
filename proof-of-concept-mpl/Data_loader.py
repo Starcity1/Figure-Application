@@ -111,7 +111,7 @@ class WindowHandler:
 
 # MAIN FUNCTION USED FOR TESTING ONLY! DO NOT USE FOR ETNIRE PROGRAM
 if __name__ == "__main__":
-    PATH = "./editedmain.py"
+    PATH = "./Example_data/happy_path_chargepol.csv"
     root = tkinter.Tk()
     root.geometry("1280x720")
 

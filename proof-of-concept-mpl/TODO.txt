@@ -1,12 +1,9 @@
 -- TODO:
 
-- Be able to save the progress of plots and be able to reupload them on another app instance. (Kevin)
-- Add more options when uploading file (type of plot, mult. options for time interval). (Kevin)
-- Resize stuff
-- Add title of graph below its display
-- Implement a way to load .hdf5 files to chargepol.
-- Implement a way to load raw data files to lma tools and transform them to .hdf5 files.
-- From pickle file and saved_png load them into instance of application. (David)
+- Resize stuff (08/04)
+- Add title of graph below its display (07/26)
+- Implement a way to load .hdf5 files to chargepol. (07/31)
+- Implement a way to load raw data files to lma tools and transform them to .hdf5 files. (07/31)
 
 -- When polishing:
 - Looking into other formats we would like to implement (PERSIANN, src events, MRMS, etc.)

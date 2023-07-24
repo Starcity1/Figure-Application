@@ -49,13 +49,13 @@ from sklearn.metrics import mean_squared_error
 direct = '/home/user/lma/level2/'
 
 # file path for output directory
-direct_output = 'chargepol_out'
+# direct_output = 'chargepol_out'
 
 # LMA network center (lat, lon):
 netw_center = np.array([29.7600000, -95.3700000])
 
 # Maximum range in km from network center:
-max_range = 300
+# max_range = 300
 
 # Minimum number of sources for a flash:  
 nsou = 3
@@ -328,149 +328,158 @@ for file in filenames:
     else:
         dated_filenames[file.split('_')[1]].append(file)
 
+
 # Define variables:
-pos_zmin = []
-pos_zwid = []
-pos_time = []
-pos_flax = []
-pos_flay = []
-neg_zmin = []
-neg_zwid = []
-neg_time = []
-neg_flax = []
-neg_flay = []
+def init_chargepol(filename: str, in_netw_center: np.ndarray, max_range, n_sources):
+    # Updating chargepol respectively.
+    global nsou, direct, netw_center
+    nsou = n_sources
+    direct = filename
 
-# Loop on each LMA level 2 .h5 file
-for day in dated_filenames:
-    day_filename = os.path.join(direct_output, "chargepol_"+day+".csv")
-    for file in dated_filenames[day]:
+    netw_center[0] = in_netw_center[0]
+    netw_center[1] = in_netw_center[1]
 
-        # Read LMA data:
-        lma_x, lma_y, lma_z, lma_t, lma_flid, flid, flx, fly = read_lma(file, netw_center, max_range, nsou)
+    pos_zmin = []
+    pos_zwid = []
+    pos_time = []
+    pos_flax = []
+    pos_flay = []
+    neg_zmin = []
+    neg_zwid = []
+    neg_time = []
+    neg_flax = []
+    neg_flay = []
 
-        # Loop for each flash:
-        for j in range(0,flid.size):
+    # Loop on each LMA level 2 .h5 file
+    for day in dated_filenames:
+        for file in dated_filenames[day]:
 
-            # LMA flash ID:
-            flashid = flid[j]
+            # Read LMA data:
+            lma_x, lma_y, lma_z, lma_t, lma_flid, flid, flx, fly = read_lma(file, netw_center, max_range, nsou)
 
-            # Sources associated to a flash ID:
-            ind = np.where(lma_flid==flashid)
-            lma_x_fl = lma_x[ind]
-            lma_y_fl = lma_y[ind]
-            lma_z_fl = lma_z[ind]
-            lma_t_fl = lma_t[ind]
-            lma_flid_fl = lma_flid[ind]
+            # Loop for each flash:
+            for j in range(0,flid.size):
 
-            # Time of first source of a flash:
-            min_t = np.min(lma_t_fl)
+                # LMA flash ID:
+                flashid = flid[j]
 
-            # Calculate linear regression on PB sources:
-            ch_hgt_thresh, pb_vert_speed, mse = regression_pb(lma_t_fl, lma_z_fl, min_t, max_pb_dur)
+                # Sources associated to a flash ID:
+                ind = np.where(lma_flid==flashid)
+                lma_x_fl = lma_x[ind]
+                lma_y_fl = lma_y[ind]
+                lma_z_fl = lma_z[ind]
+                lma_t_fl = lma_t[ind]
+                lma_flid_fl = lma_flid[ind]
 
-            # Non-PB sources sources (after 10 ms):
-            whch = np.where((1000.*(lma_t_fl-min_t) > max_pb_dur ) & (lma_z_fl <= 20))
-            zch = lma_z_fl[whch]
-            tch = lma_t_fl[whch]
+                # Time of first source of a flash:
+                min_t = np.min(lma_t_fl)
 
-            # If flash passes vertical speed and MSE conditions:
-            if np.abs(pb_vert_speed) > min_ver_speed and mse < max_mse:
+                # Calculate linear regression on PB sources:
+                ch_hgt_thresh, pb_vert_speed, mse = regression_pb(lma_t_fl, lma_z_fl, min_t, max_pb_dur)
 
-                # Non-PB sources above and below charge height threshold (CHT):
-                wh_uplay = np.where(zch >= ch_hgt_thresh)
-                wh_lwlay = np.where(zch < ch_hgt_thresh)
+                # Non-PB sources sources (after 10 ms):
+                whch = np.where((1000.*(lma_t_fl-min_t) > max_pb_dur ) & (lma_z_fl <= 20))
+                zch = lma_z_fl[whch]
+                tch = lma_t_fl[whch]
 
-                # Upward PB:
-                if np.sign(pb_vert_speed) > 0:
+                # If flash passes vertical speed and MSE conditions:
+                if np.abs(pb_vert_speed) > min_ver_speed and mse < max_mse:
 
-                    # Positive layer above CHT, negative below CHT
-                    pos_sour = zch[wh_uplay]
-                    neg_sour = zch[wh_lwlay]
-                    pos_t = tch[wh_uplay]
-                    neg_t = tch[wh_lwlay]
+                    # Non-PB sources above and below charge height threshold (CHT):
+                    wh_uplay = np.where(zch >= ch_hgt_thresh)
+                    wh_lwlay = np.where(zch < ch_hgt_thresh)
 
-                    # If candidate sources for positive layer are found:
-                    if pos_sour.size > 0:
+                    # Upward PB:
+                    if np.sign(pb_vert_speed) > 0:
 
-                        # Get sources that define positive charge layer, percentile interval on altitudes
-                        pos_qua = np.quantile(pos_sour, [perc_interv[0], perc_interv[1]])
-                        whqua = np.where((pos_sour > pos_qua[0]) & (pos_sour < pos_qua[1] ))
-                        pos_sour = pos_sour[whqua]
-                        pos_t = pos_t[whqua]
+                        # Positive layer above CHT, negative below CHT
+                        pos_sour = zch[wh_uplay]
+                        neg_sour = zch[wh_lwlay]
+                        pos_t = tch[wh_uplay]
+                        neg_t = tch[wh_lwlay]
+
+                        # If candidate sources for positive layer are found:
                         if pos_sour.size > 0:
-                            pos_zmin.append([np.min(pos_sour)])
-                            pos_zwid.append([np.max(pos_sour)-np.min(pos_sour)])
-                            pos_time.append([np.min(pos_t)])
-                            pos_flax.append([flx[j]])
-                            pos_flay.append([fly[j]])
 
-                    # If candidate sources for negative layer are found:
-                    if neg_sour.size > 0:
+                            # Get sources that define positive charge layer, percentile interval on altitudes
+                            pos_qua = np.quantile(pos_sour, [perc_interv[0], perc_interv[1]])
+                            whqua = np.where((pos_sour > pos_qua[0]) & (pos_sour < pos_qua[1] ))
+                            pos_sour = pos_sour[whqua]
+                            pos_t = pos_t[whqua]
+                            if pos_sour.size > 0:
+                                pos_zmin.append([np.min(pos_sour)])
+                                pos_zwid.append([np.max(pos_sour)-np.min(pos_sour)])
+                                pos_time.append([np.min(pos_t)])
+                                pos_flax.append([flx[j]])
+                                pos_flay.append([fly[j]])
 
-                        # Get sources that define negative charge layer, percentile interval on altitudes:
-                        neg_qua = np.quantile(neg_sour, [perc_interv[0], perc_interv[1]])
-                        wnqua = np.where((neg_sour > neg_qua[0]) & (neg_sour < neg_qua[1] ))
-                        neg_sour = neg_sour[wnqua]
-                        neg_t = neg_t[wnqua]
+                        # If candidate sources for negative layer are found:
                         if neg_sour.size > 0:
-                            neg_zmin.append([np.min(neg_sour)])
-                            neg_zwid.append([np.max(neg_sour)-np.min(neg_sour)])
-                            neg_time.append([np.min(neg_t)])
-                            neg_flax.append([flx[j]])
-                            neg_flay.append([fly[j]])
 
-                # Downward PB:
-                else:
+                            # Get sources that define negative charge layer, percentile interval on altitudes:
+                            neg_qua = np.quantile(neg_sour, [perc_interv[0], perc_interv[1]])
+                            wnqua = np.where((neg_sour > neg_qua[0]) & (neg_sour < neg_qua[1] ))
+                            neg_sour = neg_sour[wnqua]
+                            neg_t = neg_t[wnqua]
+                            if neg_sour.size > 0:
+                                neg_zmin.append([np.min(neg_sour)])
+                                neg_zwid.append([np.max(neg_sour)-np.min(neg_sour)])
+                                neg_time.append([np.min(neg_t)])
+                                neg_flax.append([flx[j]])
+                                neg_flay.append([fly[j]])
 
-                    # Negative layer above CHT, positive below CHT:
-                    pos_sour = zch[wh_lwlay]
-                    neg_sour = zch[wh_uplay]
-                    pos_t = tch[wh_lwlay]
-                    neg_t = tch[wh_uplay]
+                    # Downward PB:
+                    else:
 
-                    # If candidate sources for positive layer are found:
-                    if pos_sour.size > 0:
+                        # Negative layer above CHT, positive below CHT:
+                        pos_sour = zch[wh_lwlay]
+                        neg_sour = zch[wh_uplay]
+                        pos_t = tch[wh_lwlay]
+                        neg_t = tch[wh_uplay]
 
-                        # Get sources that define positive charge layer, percentile interval on altitudes:
-                        pos_qua = np.quantile(pos_sour, [perc_interv[0], perc_interv[1]])
-                        whqua = np.where((pos_sour > pos_qua[0]) & (pos_sour < pos_qua[1] ))
-                        pos_sour = pos_sour[whqua]
-                        pos_t = pos_t[whqua]
+                        # If candidate sources for positive layer are found:
                         if pos_sour.size > 0:
-                            pos_zmin.append([np.min(pos_sour)])
-                            pos_zwid.append([np.max(pos_sour)-np.min(pos_sour)])
-                            pos_time.append([np.min(pos_t)])
-                            pos_flax.append([flx[j]])
-                            pos_flay.append([fly[j]])
 
-                    # If candidate sources for negative layer are found:
-                    if neg_sour.size > 0:
+                            # Get sources that define positive charge layer, percentile interval on altitudes:
+                            pos_qua = np.quantile(pos_sour, [perc_interv[0], perc_interv[1]])
+                            whqua = np.where((pos_sour > pos_qua[0]) & (pos_sour < pos_qua[1] ))
+                            pos_sour = pos_sour[whqua]
+                            pos_t = pos_t[whqua]
+                            if pos_sour.size > 0:
+                                pos_zmin.append([np.min(pos_sour)])
+                                pos_zwid.append([np.max(pos_sour)-np.min(pos_sour)])
+                                pos_time.append([np.min(pos_t)])
+                                pos_flax.append([flx[j]])
+                                pos_flay.append([fly[j]])
 
-                        # Get sources that define negative charge layer, percentile interval on altitudes:
-                        neg_qua = np.quantile(neg_sour, [perc_interv[0], perc_interv[1]])
-                        wnqua = np.where((neg_sour > neg_qua[0]) & (neg_sour < neg_qua[1] ))
-                        neg_sour = neg_sour[wnqua]
-                        neg_t = neg_t[wnqua]
+                        # If candidate sources for negative layer are found:
                         if neg_sour.size > 0:
-                            neg_zmin.append([np.min(neg_sour)])
-                            neg_zwid.append([np.max(neg_sour)-np.min(neg_sour)])
-                            neg_time.append([np.min(neg_t)])
-                            neg_flax.append([flx[j]])
-                            neg_flay.append([fly[j]])
 
-    # Save charge layers output:
-    write_out = write_output(day_filename, pos_time, pos_zmin, pos_zwid, pos_flax, pos_flay, neg_time, neg_zmin, neg_zwid, neg_flax, neg_flay  )
+                            # Get sources that define negative charge layer, percentile interval on altitudes:
+                            neg_qua = np.quantile(neg_sour, [perc_interv[0], perc_interv[1]])
+                            wnqua = np.where((neg_sour > neg_qua[0]) & (neg_sour < neg_qua[1] ))
+                            neg_sour = neg_sour[wnqua]
+                            neg_t = neg_t[wnqua]
+                            if neg_sour.size > 0:
+                                neg_zmin.append([np.min(neg_sour)])
+                                neg_zwid.append([np.max(neg_sour)-np.min(neg_sour)])
+                                neg_time.append([np.min(neg_t)])
+                                neg_flax.append([flx[j]])
+                                neg_flay.append([fly[j]])
 
-    # Reinitialize dataframes
-    pos_zmin.clear()
-    pos_zwid.clear()
-    pos_time.clear()
-    pos_flax.clear()
-    pos_flay.clear()
-    neg_zmin.clear()
-    neg_zwid.clear()
-    neg_time.clear()
-    neg_flax.clear()
-    neg_flay.clear()
+        # Save charge layers output:
+        write_out = write_output("", pos_time, pos_zmin, pos_zwid, pos_flax, pos_flay, neg_time, neg_zmin, neg_zwid, neg_flax, neg_flay  )
 
-print('Done')
+        # Reinitialize dataframes
+        pos_zmin.clear()
+        pos_zwid.clear()
+        pos_time.clear()
+        pos_flax.clear()
+        pos_flay.clear()
+        neg_zmin.clear()
+        neg_zwid.clear()
+        neg_time.clear()
+        neg_flax.clear()
+        neg_flay.clear()
+
+    return write_out
