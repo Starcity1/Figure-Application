@@ -46,7 +46,7 @@ from sklearn.metrics import mean_squared_error
 
 # Define parameters:
 # Directory where LMA level 2 HDF5 files are saved:
-direct = '/home/user/lma/level2/'
+# direct = '/home/user/lma/level2/'
 
 # file path for output directory
 # direct_output = 'chargepol_out'
@@ -316,28 +316,22 @@ def write_output(filename_output, pos_time, pos_zmin, pos_zwid, pos_flax, pos_fl
 
 
 
-# All .h5 files in directory separated by date:
-filenames = glob.glob(direct+'*.flash.h5') 
-filenames = sorted(filenames)
-
-dated_filenames = dict()
-
-for file in filenames:
-    if file.split('_')[1] not in dated_filenames:
-        dated_filenames[file.split('_')[1]] = [file]
-    else:
-        dated_filenames[file.split('_')[1]].append(file)
 
 
 # Define variables:
-def init_chargepol(filename: str, in_netw_center: np.ndarray, max_range, n_sources):
+def init_chargepol(direct: str, in_netw_center: np.ndarray, max_range, n_sources):
     # Updating chargepol respectively.
-    global nsou, direct, netw_center
+    global nsou, netw_center
     nsou = n_sources
-    direct = filename
 
     netw_center[0] = in_netw_center[0]
     netw_center[1] = in_netw_center[1]
+
+    # All .h5 files in directory separated by date:
+    filenames = glob.glob(direct+'*.flash.h5')
+    filenames = sorted(filenames)
+
+    dated_filenames = dict()
 
     pos_zmin = []
     pos_zwid = []
@@ -349,6 +343,12 @@ def init_chargepol(filename: str, in_netw_center: np.ndarray, max_range, n_sourc
     neg_time = []
     neg_flax = []
     neg_flay = []
+
+    for file in filenames:
+        if file.split('_')[1] not in dated_filenames:
+            dated_filenames[file.split('_')[1]] = [file]
+        else:
+            dated_filenames[file.split('_')[1]].append(file)
 
     # Loop on each LMA level 2 .h5 file
     for day in dated_filenames:
