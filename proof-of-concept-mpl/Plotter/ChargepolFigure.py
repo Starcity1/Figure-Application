@@ -41,10 +41,24 @@ class ChargepolFigure:
     in the application. It (will) contain various functions that allow us to easily plot such figures in the application.
     As well as to get useful information about the plot and the ability to modify such plots in run-time.
     """
-    def __init__(self, filepath, master: Frame, type_fig: FigureType):
+    def __init__(self, filepath, master: Frame, type_fig: FigureType, load_from_file=False, saved_obj = None):
+        if load_from_file and saved_obj is not None:
+            # The saved_object is of format "Chargepol Data"
+            # "Plot Information" -> [type, sup_title, initi_time, time_interval, x_label, y_label
+
+            self.chargepol_data = saved_obj["Chargepol Data"]
+
+            self.type = saved_obj["Plot Information"][0]
+            self.sup_title = saved_obj["Plot Information"][1]
+            self.initial_time = saved_obj["Plot Information"][2]
+            self.time_interval = saved_obj["Plot Information"][3]
+            self.x_label = saved_obj["Plot Information"][4]
+            self.y_label = saved_obj["Plot Information"][5]
+            return
+
         self.filep = filepath
         self.chargepol_data = self.process_chargepol()
-        #print(self.chargepol_data["Timestamp"])
+        # print(self.chargepol_data["Timestamp"])
         if self.chargepol_data is None:
             return
 
@@ -164,6 +178,20 @@ class ChargepolFigure:
         # toolbar.place(relx=0.5, rely=1, relwidth=1, anchor=S)
 
         return self.canvas
+
+    def update_plot(self):
+        for ax in self.fig.get_axes():
+            ax.clear()
+
+        self.ax.set_title(self.sup_title)
+        self.ax.set_xlabel(self.x_label)
+        self.ax.set_ylabel(self.y_label)
+        self.ax.set_xlim(right=self.initial_time + self.time_interval)
+        self.ax.set_xlim(left=self.initial_time)
+
+        self.plot_data()
+
+        return self.createWidget()
 
     def plot_data(self):
         # Utility inner function to determine time interval.
@@ -342,7 +370,6 @@ class ChargepolFigure:
     def store_file(self, filepath: str):
         # Creating pickle folder.
         # Redrawing plot.
-        print(self.fig.get_axes())
 
         parent_dir = filepath.split('/')[:-1]
         parent_dir.append("Saved_files")
@@ -355,11 +382,20 @@ class ChargepolFigure:
         # Original file ::
 
         pickle_file = open(pickle_path + "/" + pickle_filename + ".pickle", 'wb')
-        pickle.dump((self.fig, self.fig.get_axes()), pickle_file)
+
+        # Instead of pickling the plots themselves, we will plot the data to create the plots. That is:
+        # chargepol data (self.chargepol_data), info about plot: (self.sup_title, self.initial_time, self.time_interval
+        # self.x_label, self.y_label. And creating this new instance we plot values again.
+
+        pickle.dump({
+            "Chargepol Data": self.chargepol_data,
+            "Plot Information": [self.type, self.sup_title, self.initial_time, self.time_interval, self.x_label, self.y_label]
+        }, pickle_file)
         pickle_file.close()
 
         plt.savefig(filepath)
         plt.savefig(pickle_path + "/" + pickle_filename + ".png")
+
 class InfoWindow:
     def __init__(self, Chargepol):
 
@@ -374,7 +410,7 @@ class InfoWindow:
         self.done = IntVar()
         begintime = round(Chargepol['Timestamp'][0])
         endtime = round(Chargepol['Timestamp'][-1])
-        intervalrange = "Interval is from", begintime, "to", endtime, "seconds."
+        intervalrange = f"Interval is from {begintime} to {endtime} seconds."
         # Labels.
         self.figure_type_label = Label(self.new, text="Select type of figure").grid(row=0, column=1, pady=2)
         self.title_label = Label(self.new, text="Title").grid(row=1,column=1, pady=2)
