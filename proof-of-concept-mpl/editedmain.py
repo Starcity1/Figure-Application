@@ -192,7 +192,7 @@ class App():
         """Generates the respective chargepol_figure objects"""
 
         def create_image(master:Frame, filename:str, w, h):
-            print(filename)
+            #print(filename)
             load = Image.open(fp=filename)
             resized_load = load.resize((w, h), Image.LANCZOS)
             render = ImageTk.PhotoImage(resized_load)
@@ -216,7 +216,13 @@ class App():
 
             self.chargepolfigure_objects[name] = new_object
 
-            rely += 0.20
+            rely += 0.15
+            name = name[12:] + ".png"
+            mytext = Label(master=self.option_window, background='#323f4a', foreground='white', font=20,
+                                     text=name)
+
+            mytext.place(relx=0.5, rely=rely, anchor=N)
+            rely += 0.10
 
     def move_to_display(self):
         raise NotImplemented
