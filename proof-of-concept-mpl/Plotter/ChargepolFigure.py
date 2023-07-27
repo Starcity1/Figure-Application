@@ -147,7 +147,6 @@ class ChargepolFigure:
         # Creating dataframe to determine validity.
         dataframes = []
         for i, n in enumerate(self.filep):
-            print(self.filep)
             if self.filep[i].endswith('.csv'):
                 #print(self.filep[i])
                 df = pd.read_csv(self.filep[i], skiprows=[0, 1])  # We skip the main comments above.

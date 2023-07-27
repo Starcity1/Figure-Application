@@ -45,7 +45,7 @@ class DataLoader:
             messagebox.showerror(title="Invalid File", message="ERROR: An invalid format was provided.")
             return
 
-        self.Cfigure = self._process_file()
+        self._process_file()
 
 
 
@@ -76,10 +76,11 @@ class DataLoader:
         return FileType.UNDEFINED
 
 
-    def _process_file(self) -> CFig.ChargepolFigure:
+    def _process_file(self):
         # If we have a Chargepol Figure then we skip and create a figure in editedmain.py as usual
         if self.file_type is FileType.CHARGEPOL:
             self.Cfigure = CFig.ChargepolFigure((self.file, ), self.master, CFig.FigureType.DENSITY)
+            self.chargepol_data = self.Cfigure.chargepol_data
         elif self.file_type is FileType.HDF5:
             # Create the window popup to set up the values for chargepol, then create
             # Chargepol Figure here.
@@ -144,7 +145,7 @@ class WindowHandler:
             self.directory_path_label.grid(row=row_itr, column=0, padx=5, pady=5)
             self.directory_strvar = tkinter.StringVar()
             self.directory_path_entry = tkinter.Entry(master=new_window, textvariable=self.directory_strvar)
-            self.directory_strvar.set(self.loader.file)
+            self.directory_strvar.set(os.path.dirname(self.loader.file) + '/')
             self.directory_path_entry.grid(row=row_itr, column=1, padx=5, pady=5)
 
             row_itr += 1

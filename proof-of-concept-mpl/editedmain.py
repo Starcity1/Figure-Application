@@ -15,6 +15,7 @@ import os
 import pickle
 
 # Other scripts in project
+import Data_loader as DL
 from Plotter import ChargepolFigure
 from Plotter import Properties
 
@@ -145,13 +146,12 @@ class App():
         # path = askdirectory(initialdir=',')
         # print(path)
 
-        filename = filedialog.askopenfilenames(initialdir='.',
-                                             filetypes=[('Chargepol files', '*.csv'), ('HLMA raw', '*.hdf5')])
-        new_chargepol_figure = ChargepolFigure.ChargepolFigure(filename, self.graph_window,
-                                                               ChargepolFigure.FigureType.DENSITY)
-        if new_chargepol_figure.chargepol_data is None:
+        filename = filedialog.askopenfilenames(initialdir='.')
+        print(filename)
+        data_loader = DL.DataLoader(self.graph_window, filename[0])
+        if data_loader.chargepol_data is None:
             return
-        self.plot_graph(new_chargepol_figure)
+        self.plot_graph(data_loader.Cfigure)
 
     def update_image(self):
         # new_image = Image.open('Saved_files/217resistance.png')
