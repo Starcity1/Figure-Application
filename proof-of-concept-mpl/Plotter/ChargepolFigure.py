@@ -41,7 +41,7 @@ class ChargepolFigure:
     in the application. It (will) contain various functions that allow us to easily plot such figures in the application.
     As well as to get useful information about the plot and the ability to modify such plots in run-time.
     """
-    def __init__(self, filepath, master: Frame, type_fig: FigureType, load_from_file=False, saved_obj = None):
+    def __init__(self, filepath, master: Frame, type_fig: FigureType, load_from_file=False, saved_obj=None, data_loader=None):
         if load_from_file and saved_obj is not None:
             # The saved_object is of format "Chargepol Data"
             # "Plot Information" -> [type, sup_title, initi_time, time_interval, x_label, y_label
@@ -57,10 +57,15 @@ class ChargepolFigure:
             return
 
         self.filep = filepath
-        self.chargepol_data = self.process_chargepol()
+        if data_loader is None:
+            self.chargepol_data = self.process_chargepol()
+        else:
+            self.chargepol_data = data_loader
+
         # print(self.chargepol_data["Timestamp"])
         if self.chargepol_data is None:
-            return
+            tkinter.messagebox.showerror("Fatal error: Data was not loaded correctly.")
+            raise RuntimeError("Data not uploaded.")
 
         self.type = type_fig
 
@@ -106,14 +111,9 @@ class ChargepolFigure:
         """
         Within this object, we will generate a dictionary with the structure:
         dict :: {
-            "Charge" : Charge column
-            "Time"   : Time column
-            "Zmin"   : Zmin column
-            "Zwidth" : Zwidth column
-            "X"      : X column
-            "Y"      : Y column
-            "Lon"    : Lon column
-            "Lat"    : Lat column
+            "Timestamp" : Time information for each event.
+            "Charge"    : The charge information and altitude information in the format [[charge], [zmin], [zwidth]]
+            "Location"  : Latitude and longitude of the event in the form [[lon], [lat]]
         }
         :return: A dictionary with all the chargepol data ordered by time.
         """
@@ -147,6 +147,7 @@ class ChargepolFigure:
         # Creating dataframe to determine validity.
         dataframes = []
         for i, n in enumerate(self.filep):
+            print(self.filep)
             if self.filep[i].endswith('.csv'):
                 #print(self.filep[i])
                 df = pd.read_csv(self.filep[i], skiprows=[0, 1])  # We skip the main comments above.

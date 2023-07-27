@@ -283,34 +283,36 @@ def write_output(filename_output, pos_time, pos_zmin, pos_zwid, pos_flax, pos_fl
     neg_lat = ((180*neg_flay)/(np.pi*Re))+netw_center[0]
     neg_lon = ((360*neg_flax)/(2*np.pi*Re*np.cos(np.pi*neg_lat/180)))+netw_center[1]
 
-    chargepol_dict = {
-        "Time"      : [], # Time column
-        "Charge"    : [], # Charge column
-        "Zmin"      : [], # Zmin column
-        "Zwidth"    : [], # Zwidth column
-        "X"         : [], # X column
-        "Y"         : [], # Y column
-        "Lat"       : [], # Lat column
-        "Lon"       : [], # Lon column
+    """
+    Within this object, we will generate a dictionary with the structure:
+    dict :: {
+        "Timestamp" : Time information for each event.
+        "Charge"    : The charge information and altitude information in the format [[charge], [zmin], [zwidth]]
+        "Location"  : Latitude and longitude of the event in the form [[lon], [lat]]
     }
-    for f in np.arange(len(pos_time)):
-        chargepol_dict["Time"].append(pos_time[f])
-        chargepol_dict["Charge"].append("pos")
-        chargepol_dict["Zmin"].append(pos_zmin[f])
-        chargepol_dict["Zwidth"].append(pos_zwid[f])
-        chargepol_dict["X"].append(pos_flax[f])
-        chargepol_dict["Y"].append(pos_flay[f])
-        chargepol_dict["Lat"].append(pos_lat[f])
-        chargepol_dict["Lon"].append(pos_lon[f])
-    for g in np.arange(len(neg_time)):
-        chargepol_dict["Time"].append(neg_time[g])
-        chargepol_dict["Charge"].append("neg")
-        chargepol_dict["Zmin"].append(neg_zmin[g])
-        chargepol_dict["Zwidth"].append(neg_zwid[g])
-        chargepol_dict["X"].append(neg_flax[g])
-        chargepol_dict["Y"].append(neg_flay[g])
-        chargepol_dict["Lat"].append(neg_lat[g])
-        chargepol_dict["Lon"].append(neg_lon[g])
+    :return: A dictionary with all the chargepol data ordered by time.
+    """
+
+    chargepol_dict = {
+        "Timestamp" : [],
+        "Charge"    : [[], [], []],
+        "Location"  : [[], []],
+    }
+
+    for f in range(len(pos_time)):
+        chargepol_dict["Timestamp"].append(pos_time[f].item())
+        chargepol_dict["Charge"][0].append('pos')
+        chargepol_dict["Charge"][1].append(pos_zmin[f].item())
+        chargepol_dict["Charge"][2].append(pos_zwid[f].item())
+        chargepol_dict["Location"][0].append(pos_lon[f].item())
+        chargepol_dict["Location"][1].append(pos_lat[f].item())
+    for g in range(len(neg_time)):
+        chargepol_dict["Timestamp"].append(neg_time[g].item())
+        chargepol_dict["Charge"][0].append('neg')
+        chargepol_dict["Charge"][1].append(neg_zmin[g].item())
+        chargepol_dict["Charge"][2].append(neg_zwid[g].item())
+        chargepol_dict["Location"][0].append(neg_lon[g].item())
+        chargepol_dict["Location"][1].append(neg_lat[g].item())
 
     return chargepol_dict
 
