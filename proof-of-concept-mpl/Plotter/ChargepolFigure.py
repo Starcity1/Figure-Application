@@ -473,22 +473,49 @@ class InfoWindow:
         self.ylabel_entry.grid(row=4, column=3, pady=2)
 
         def get_info():
-            if self.timeInterval == None:
-                self.timeInterval = int(self.interval_time_entry.get())
+            print(dropdown_res.get())
+            entries = [
+                self.title_entry.get(),
+                self.init_time_entry.get(),
+                self.timeInterval,
+                self.xlabel_entry.get(),
+                self.ylabel_entry.get(),
+                dropdown_res.get(),
+            ]
 
-            self.data = {
-                'Title': self.title_entry.get(),
-                'Init_Time': self.init_time_entry.get(),
-                'Interval': self.timeInterval,
-                'Xlabel': self.xlabel_entry.get(),
-                'Ylabel': self.ylabel_entry.get(),
-                'Figure_Type': dropdown_res.get()
-            }
+            if not all(entries) or dropdown_res.get() == 'Select an Option' or self.dropdown_res1 == 'Select interval':
+                self.done.set(2)
+                return
+
+            try:
+                self.data = {
+                    'Title': self.title_entry.get(),
+                    'Init_Time': float(self.init_time_entry.get()),
+                    'Interval': float(self.timeInterval),
+                    'Xlabel': self.xlabel_entry.get(),
+                    'Ylabel': self.ylabel_entry.get(),
+                    'Figure_Type': dropdown_res.get()
+                }
+            except ValueError:
+                self.done.set(3)
+                self.data = dict()
+                return
+
             self.done.set(1)
 
         # Button
         self.submit = Button(self.new, text="Submit", command=get_info)
         self.submit.grid(row=5, column=1, columnspan=2)
 
-        self.submit.wait_variable(self.done)
+        while True:
+            self.submit.wait_variable(self.done)
+            if self.done.get() == 1:
+                break
+
+            elif self.done.get() == 2:
+                empty_error = messagebox.showerror(message="Error: Not all fields were filled.")
+            elif self.done.get() == 3:
+                invalid_error = messagebox.showerror(message="Error: One of the fields contains an invalid value.")
+            self.done.set(0)
+
         self.new.destroy()

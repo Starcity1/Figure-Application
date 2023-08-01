@@ -129,6 +129,7 @@ class App():
 
             self.graph = figure.update_plot()
             self.graph.get_tk_widget().bind('<Button-3>', do_popup)
+            self.graph.get_tk_widget().bind('<Button-1>', do_popup)
 
         selected = IntVar()
         menu = Menu(self.graph.get_tk_widget(), tearoff=0)
@@ -146,7 +147,10 @@ class App():
         # path = askdirectory(initialdir=',')
         # print(path)
 
-        filename = filedialog.askopenfilenames(initialdir='.')
+        filename = filedialog.askopenfilenames(initialdir='.', filetypes=[
+            ('Chargepol file', '.csv'),
+            ('HDF5 file', '.h5')
+        ])
         print(filename)
         data_loader = DL.DataLoader(self.graph_window, filename[0])
         if data_loader.chargepol_data is None:
