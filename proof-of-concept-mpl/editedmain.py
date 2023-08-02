@@ -64,6 +64,7 @@ class App():
         self.chargepolfigure_objects = dict()
         self.saved_data = dict()
         self.saved_figures = dict()
+        self.buttonimages = dict()
         self.load_all_figures()
         self.generate_objects()
 
@@ -195,19 +196,21 @@ class App():
     def generate_objects(self):
         """Generates the respective chargepol_figure objects"""
 
-        def create_image(master:Frame, filename:str, w, h):
+        def create_image(master:Frame, filename:str, w, h, iteration):
             #print(filename)
             load = Image.open(fp=filename)
+            self.buttonimages[iteration] = filename
             resized_load = load.resize((w, h), Image.LANCZOS)
             render = ImageTk.PhotoImage(resized_load)
 
-            img = Button(master=master, image=render, command=self.move_to_display, justify=LEFT)
+            img = Button(master=master, image=render, command=lambda num=iteration: self.move_to_display(num), justify=LEFT)
             img.image = render
             img.place(relx=0, rely=0, relheight=1, relwidth=1)
 
 
         relx = 0.5; rely = 0.05
         width = 0.5
+        iteration = 1
         for name, data in self.saved_data.items():
             new_frame = Frame(master=self.option_window, pady=20)
             new_frame.place(relx=relx, rely=rely, relwidth=width, relheight=0.15, anchor=N)
@@ -216,20 +219,27 @@ class App():
                                                          load_from_file=True, saved_obj=data)
 
             new_frame.update()
-            create_image(new_frame, name+".png", new_frame.winfo_width(), new_frame.winfo_height())
+            create_image(new_frame, name+".png", new_frame.winfo_width(), new_frame.winfo_height(), iteration)
 
             self.chargepolfigure_objects[name] = new_object
 
             rely += 0.15
             name = name[12:] + ".png"
-            mytext = Label(master=self.option_window, background='#323f4a', foreground='white', font=20,
+            caption = Label(master=self.option_window, background='#323f4a', foreground='white', font=20,
                                      text=name)
 
-            mytext.place(relx=0.5, rely=rely, anchor=N)
+            caption.place(relx=0.5, rely=rely, anchor=N)
             rely += 0.10
+            iteration += 1
 
-    def move_to_display(self):
-        raise NotImplemented
+    def move_to_display(self, iteration):
+        filename = self.buttonimages[iteration]
+        #print(filename[:-4])
+        figure = self.chargepolfigure_objects[filename[:-4]]
+        figure.master_widget = self.graph_window
+        self.plot_graph(figure)
+
+        #raise NotImplemented
 
 
 root = Tk()

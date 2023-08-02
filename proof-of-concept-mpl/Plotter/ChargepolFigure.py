@@ -45,6 +45,8 @@ class ChargepolFigure:
         if load_from_file and saved_obj is not None:
             # The saved_object is of format "Chargepol Data"
             # "Plot Information" -> [type, sup_title, initi_time, time_interval, x_label, y_label
+            self.fig, self.ax = plt.subplots()
+            self.master_widget = None
 
             self.chargepol_data = saved_obj["Chargepol Data"]
 
@@ -132,7 +134,7 @@ class ChargepolFigure:
             #print(self.filep[i])
             self.dateList.append(self.filep[i][-8:-6] + "/" + self.filep[i][-6:-4])
 
-        print(self.dateList)
+        #print(self.dateList)
         return res
 
     def verify_file(self) -> pd.DataFrame:
@@ -164,7 +166,7 @@ class ChargepolFigure:
 
     def createWidget(self) -> FigureCanvasTkAgg:
         """
-        Creates the respective Figure Widget for the tkinter applicaiton.
+        Creates the respective Figure Widget for the tkinter application.
         :return: Widget instance.
         """
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.master_widget)
